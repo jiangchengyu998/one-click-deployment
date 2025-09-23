@@ -8,7 +8,7 @@ export const metadata = {
     description: '云朵一键部署平台 - 简化数据库管理和API部署流程',
 }
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children } : { children: React.ReactNode }) {
     return (
         <html lang="zh-CN">
         <head>
