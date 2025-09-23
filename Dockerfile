@@ -1,54 +1,51 @@
-# 多阶段构建 Dockerfile for Next.js 云朵一键部署平台
+# 使用一个已包含 corepack 的 Node.js 官方镜像
+FROM node:18-alpine AS base
 
-# 阶段1: 依赖安装阶段
-FROM node:18-alpine AS deps
+# 阶段 1: 安装依赖
+FROM base AS deps
 RUN apk add --no-cache libc6-compat
+
 WORKDIR /app
 
-# 复制 package 文件
-COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm cache clean --force
+# 启用 corepack 并配置 pnpm
+RUN corepack enable
+# 在 package.json 中应指定 "packageManager": "pnpm@x.x.x"
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm fetch --prod
 
-# 阶段2: 构建阶段
-FROM node:18-alpine AS builder
+# 阶段 2: 构建应用
+FROM base AS builder
 WORKDIR /app
+RUN corepack enable
 
-# 复制依赖
+# 首先复制锁文件和包管理配置
+COPY package.json pnpm-lock.yaml ./
+# 从 deps 阶段复制已获取的依赖（存储在虚拟存储中）
 COPY --from=deps /app/node_modules ./node_modules
+# 然后复制源代码并构建
 COPY . .
+RUN pnpm install --frozen-lockfile
+RUN pnpm run build
 
-# 环境变量设置（构建时可调整）
-ENV NEXT_TELEMETRY_DISABLED 1
-ENV NODE_ENV production
-
-# 构建应用
-RUN npm run build
-
-# 阶段3: 运行阶段
-FROM node:18-alpine AS runner
+# 阶段 3: 准备运行环境
+FROM base AS runner
 WORKDIR /app
+RUN corepack enable
 
-# 创建非root用户
+# 以非 root 用户运行增强安全性
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# 创建必要的目录
-RUN mkdir -p /app/.next
-RUN chown nextjs:nodejs /app/.next
-
-# 从builder阶段复制必要文件
+# 复制构建产物和运行依赖
 COPY --from=builder /app/public ./public
+# 根据 Next.js 输出模式调整（standalone 或 standard）
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-# 暴露端口
-EXPOSE 3003
-
-# 设置环境变量
-ENV PORT 3003
+EXPOSE 3000
+ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-# 启动命令
 CMD ["node", "server.js"]
