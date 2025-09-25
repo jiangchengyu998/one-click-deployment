@@ -1,4 +1,7 @@
+// src/components/home/CTA.js
 "use client";
+import Link from 'next/link';
+
 export default function CTA() {
     return (
         <section id="cta" className="cta">
@@ -6,7 +9,8 @@ export default function CTA() {
                 <div className="cta-content">
                     <h2>立即开始您的部署之旅</h2>
                     <p>加入数千名开发者，体验简单高效的部署流程</p>
-                    <a href="#" className="btn btn-light">免费注册</a>
+                    {/* 修改按钮链接 */}
+                    <Link href="/auth/register" className="btn btn-light">免费注册</Link>
                 </div>
             </div>
             <style jsx>{`

@@ -1,0 +1,86 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" // 或 "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  code         String   @unique // 2-4位字母代码，用于生成唯一域名
+  name         String
+  email        String   @unique
+  avatar       String?
+  password     String
+  apiQuota     Int      @default(2) // API配额
+  dbQuota      Int      @default(1) // 数据库配额
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  apis      Api[]
+  databases Database[]
+
+  @@map("users")
+}
+
+model Api {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String
+  gitUrl       String
+  gitToken     String?
+  lastJobId    String?  // 最近一次部署的Job ID
+  domain       String   // 生成的域名，格式: {apiName}-{userCode}.yunduo.app
+  status       ApiStatus @default(PENDING) // PENDING, BUILDING, RUNNING, ERROR
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("apis")
+}
+
+model Database {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  username    String   // 数据库用户名
+  password    String   // 普通密码
+  apiPassword String   // API访问密码
+  host        String   // 数据库访问地址
+  status      DbStatus @default(CREATING) // CREATING, RUNNING, ERROR
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("databases")
+}
+
+enum ApiStatus {
+  PENDING
+  BUILDING
+  RUNNING
+  ERROR
+}
+
+enum DbStatus {
+  CREATING
+  RUNNING
+  ERROR
+}

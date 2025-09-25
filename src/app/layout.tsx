@@ -1,5 +1,7 @@
+// src/app/layout.js
 import { Inter } from 'next/font/google'
 import './globals.css'
+import MainNav from "@/components/home/MainNav";
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -14,7 +16,11 @@ export default function RootLayout({ children } : { children: React.ReactNode })
         <head>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
         </head>
-        <body className={inter.className}>{children}</body>
+        <body className={inter.className}>
+        {/* 只在非管理员/非控制台页面显示主导航 */}
+        <MainNav />
+        {children}
+        </body>
         </html>
     )
 }

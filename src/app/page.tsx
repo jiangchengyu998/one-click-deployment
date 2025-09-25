@@ -1,14 +1,14 @@
-import Header from './components/Header'
-import Hero from './components/Hero'
-import Features from './components/Features'
-import Workflow from './components/Workflow'
-import CTA from './components/CTA'
-import Footer from './components/Footer'
+import Header from '@/components/Header'
+import Hero from '@/components/home/Hero'
+import Features from '@/components/home/Features'
+import Workflow from '@/components/home/Workflow'
+import CTA from '@/components/home/CTA'
+import Footer from '@/components/Footer'
 
 export default function Home() {
   return (
       <div>
-        <Header />
+        {/*<Header />*/}
         <Hero />
         <Features />
         <Workflow />

@@ -18,8 +18,9 @@
         "name": "next"
       }
     ],
+    "baseUrl": ".",           // 必须有
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["src/*"]        // ⚡ 注意这里不要写 ./src/*，直接写 src/*
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
