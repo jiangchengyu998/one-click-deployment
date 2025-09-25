@@ -54,8 +54,10 @@ export async function PATCH(request, { params }) {
                 return obj;
             }, {});
 
+        const { id } = await params
+
         const user = await prisma.user.update({
-            where: { id: params.id },
+            where: { id: id },
             data: filteredUpdates
         });
 
