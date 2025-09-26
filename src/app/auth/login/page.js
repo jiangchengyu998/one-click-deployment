@@ -1,7 +1,7 @@
 // src/app/auth/login/page.js
 "use client";
 
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -13,6 +13,18 @@ export default function UserLogin() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const message = searchParams.get('message');
+
+    // 先检查用户是否已经登录，如果是则重定向到控制台
+    useEffect(() => {
+        const checkLogin = async () => {
+            const response = await fetch('/api/auth/check-login');
+            const data = await response.json();
+            if (response.ok && data.isLoggedIn) {
+                router.push('/dashboard');
+            }
+        };
+        checkLogin().then(r => r);
+    }, [router]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
