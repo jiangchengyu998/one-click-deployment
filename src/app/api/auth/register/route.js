@@ -78,7 +78,7 @@ export async function POST(request) {
                 email,
                 password: hashedPassword,
                 apiQuota: 2, // 默认API配额
-                dbQuota: 1,  // 默认数据库配额
+                dbQuota: 2,  // 默认数据库配额
             },
         });
 

@@ -1,6 +1,6 @@
 // src/lib/utils.js
 export function generateUserCode() {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
     let code = '';
 
     // 生成2位代码（可扩展为3-4位）
