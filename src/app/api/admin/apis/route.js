@@ -1,16 +1,14 @@
 // src/app/api/apis/route.js
 import { NextResponse } from 'next/server';
-// import { getServerSession } from '@/lib/auth';
 import { getUserSession } from '@/lib/auth';
-
 import { prisma } from '@/lib/db';
 
+// 获取当前用户的API列表
 export async function GET(request) {
     try {
         const session = await getUserSession(request);
-        console.log('api User session:', session);
 
-        if (!session || !session.id) {
+        if (!session) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
@@ -29,15 +27,24 @@ export async function GET(request) {
     }
 }
 
+// 创建新API
 export async function POST(request) {
     try {
         const session = await getUserSession(request);
 
-        if (!session || !session.id) {
+        if (!session) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
-        const { name, gitUrl, gitToken } = await request.json();
+        const { name, gitUrl, gitToken, dockerfile } = await request.json();
+
+        // 验证必填字段
+        if (!name || !gitUrl) {
+            return NextResponse.json(
+                { error: 'API名称和Git仓库地址是必填的' },
+                { status: 400 }
+            );
+        }
 
         // 检查用户配额
         const user = await prisma.user.findUnique({
@@ -63,11 +70,29 @@ export async function POST(request) {
                 gitToken,
                 domain,
                 userId: session.id,
+                status: 'PENDING'
             },
         });
 
-        // 这里可以添加触发部署逻辑
-        // await triggerDeployment(api);
+        // 在实际应用中，这里应该调用部署服务
+        // 模拟部署过程
+        setTimeout(async () => {
+            await prisma.api.update({
+                where: { id: api.id },
+                data: {
+                    status: 'BUILDING',
+                    lastJobId: `job-${Date.now()}`
+                }
+            });
+
+            // 模拟构建完成
+            setTimeout(async () => {
+                await prisma.api.update({
+                    where: { id: api.id },
+                    data: { status: 'RUNNING' }
+                });
+            }, 10000);
+        }, 2000);
 
         return NextResponse.json(api, { status: 201 });
     } catch (error) {
