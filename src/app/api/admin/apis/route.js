@@ -16,6 +16,19 @@ export async function GET(request) {
             where: { userId: session.id },
             orderBy: { createdAt: 'desc' }
         });
+        // 在这里通过userId获取用户信息，放到每个API对象中
+        const userIds = apis.map(api => api.userId);
+        const users = await prisma.user.findMany({
+            where: { id: { in: userIds } }
+        });
+        const userMap = users.reduce((acc, user) => {
+            acc[user.id] = user;
+            return acc;
+        }, {});
+
+        apis.forEach(api => {
+            api.user = userMap[api.userId];
+        });
 
         return NextResponse.json(apis);
     } catch (error) {

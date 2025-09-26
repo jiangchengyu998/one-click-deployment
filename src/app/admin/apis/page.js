@@ -222,12 +222,9 @@ export default function AdminApis() {
                                 </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                                {/*<div className="text-sm text-gray-900">{api.user.name}</div>*/}
-                                <div className="text-sm text-gray-500">{api.userId}</div>
-                                {/*<div className="text-sm text-gray-500">{api.user.email}</div>*/}
-                                <div className="text-sm text-gray-500">{api.userId}</div>
-                                <div className="text-xs text-gray-400">代码: {api.userId}</div>
-                                {/*<div className="text-xs text-gray-400">代码: {api.user.code}</div>*/}
+                                <div className="text-sm text-gray-900">{api.user.name}</div>
+                                <div className="text-sm text-gray-500">{api.user.email}</div>
+                                <div className="text-xs text-gray-400">代码: {api.user.code}</div>
                             </td>
                             <td className="px-6 py-4">
                                 <div className="text-sm text-gray-900">{api.domain}</div>
