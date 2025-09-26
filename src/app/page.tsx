@@ -1,4 +1,4 @@
-import Header from '@/components/Header'
+// 这是首页
 import Hero from '@/components/home/Hero'
 import Features from '@/components/home/Features'
 import Workflow from '@/components/home/Workflow'

@@ -1,4 +1,6 @@
 "use client";
+import Link from 'next/link';
+
 export default function Features() {
     const features = [
         {
@@ -33,73 +35,73 @@ export default function Features() {
                             </div>
                             <h3>{feature.title}</h3>
                             <p>{feature.description}</p>
-                            <a href="#" className="btn btn-outline">了解更多</a>
+                            <Link href="/#features" className="btn btn-outline">了解更多</Link>
                         </div>
                     ))}
                 </div>
             </div>
             <style jsx>{`
-        .features {
-          padding: 80px 0;
-          background: var(--light-bg);
-        }
-        
-        .features-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 30px;
-        }
-        
-        .feature-card {
-          background: var(--white);
-          border-radius: var(--radius);
-          padding: 30px;
-          box-shadow: var(--shadow);
-          transition: transform 0.3s;
-          text-align: center;
-        }
-        
-        .feature-card:hover {
-          transform: translateY(-5px);
-        }
-        
-        .feature-icon {
-          width: 70px;
-          height: 70px;
-          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 20px;
-        }
-        
-        .feature-icon i {
-          font-size: 30px;
-          color: var(--white);
-        }
-        
-        .feature-card h3 {
-          font-size: 22px;
-          margin-bottom: 15px;
-        }
-        
-        .feature-card p {
-          color: var(--light-text);
-          margin-bottom: 20px;
-          line-height: 1.6;
-        }
-        
-        @media (max-width: 768px) {
-          .features {
-            padding: 60px 0;
-          }
-          
-          .features-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
+                .features {
+                    padding: 80px 0;
+                    background: var(--light-bg);
+                }
+
+                .features-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                    gap: 30px;
+                }
+
+                .feature-card {
+                    background: var(--white);
+                    border-radius: var(--radius);
+                    padding: 30px;
+                    box-shadow: var(--shadow);
+                    transition: transform 0.3s;
+                    text-align: center;
+                }
+
+                .feature-card:hover {
+                    transform: translateY(-5px);
+                }
+
+                .feature-icon {
+                    width: 70px;
+                    height: 70px;
+                    background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 20px;
+                }
+
+                .feature-icon i {
+                    font-size: 30px;
+                    color: var(--white);
+                }
+
+                .feature-card h3 {
+                    font-size: 22px;
+                    margin-bottom: 15px;
+                }
+
+                .feature-card p {
+                    color: var(--light-text);
+                    margin-bottom: 20px;
+                    line-height: 1.6;
+                }
+
+                @media (max-width: 768px) {
+                    .features {
+                        padding: 60px 0;
+                    }
+
+                    .features-grid {
+                        grid-template-columns: 1fr;
+                    }
+                }
+            `}</style>
         </section>
     )
 }
