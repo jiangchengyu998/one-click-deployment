@@ -18,6 +18,7 @@ export default function UserApis() {
         name: '',
         gitUrl: '',
         gitToken: '',
+        envs: {}, // 新增环境变量字段
         dockerfile: 'default' // default 或 custom
     });
 
@@ -150,6 +151,28 @@ export default function UserApis() {
             case 'ERROR': return '错误';
             default: return '未知';
         }
+    };
+
+    // --- 新增: 环境变量操作 ---
+    const handleAddEnv = () => {
+        const newKey = `KEY${Object.keys(newApi.envs).length + 1}`;
+        setNewApi({
+            ...newApi,
+            envs: { ...newApi.envs, [newKey]: '' }
+        });
+    };
+
+    const handleEnvChange = (key, value) => {
+        setNewApi({
+            ...newApi,
+            envs: { ...newApi.envs, [key]: value }
+        });
+    };
+
+    const handleRemoveEnv = (key) => {
+        const updatedEnvs = { ...newApi.envs };
+        delete updatedEnvs[key];
+        setNewApi({ ...newApi, envs: updatedEnvs });
     };
 
     if (loading) {
@@ -313,6 +336,70 @@ export default function UserApis() {
                                         </select>
                                     </div>
                                 </div>
+                                {/* 环境变量配置 */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">环境变量</label>
+                                    <div className="space-y-2 mt-2">
+                                        {Object.keys(newApi.envs).length === 0 && (
+                                            <p className="text-xs text-gray-500">尚未添加环境变量</p>
+                                        )}
+                                        {Object.entries(newApi.envs).map(([key, value]) => (
+                                            <div key={key} className="flex space-x-2">
+                                                {/* Key 输入框 */}
+                                                <input
+                                                    type="text"
+                                                    value={key}
+                                                    onChange={(e) => {
+                                                        const newKey = e.target.value.trim();
+                                                        const updatedEnvs = { ...newApi.envs };
+                                                        const oldValue = updatedEnvs[key];
+                                                        delete updatedEnvs[key]; // 删除旧 key
+                                                        if (newKey) {
+                                                            updatedEnvs[newKey] = oldValue; // 设置新 key
+                                                        }
+                                                        setNewApi({ ...newApi, envs: updatedEnvs });
+                                                    }}
+                                                    className="w-1/3 border border-gray-300 rounded-md px-2 py-1"
+                                                    placeholder="变量名 (如 DB_USER)"
+                                                />
+
+                                                {/* Value 输入框 */}
+                                                <input
+                                                    type="text"
+                                                    value={value}
+                                                    onChange={(e) => handleEnvChange(key, e.target.value)}
+                                                    className="w-2/3 border border-gray-300 rounded-md px-2 py-1"
+                                                    placeholder="值"
+                                                />
+
+                                                {/* 删除按钮 */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveEnv(key)}
+                                                    className="text-red-500 hover:text-red-700"
+                                                >
+                                                    删除
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            // 新增一条随机 key 避免冲突
+                                            const tempKey = `NEW_KEY_${Date.now()}`;
+                                            setNewApi({
+                                                ...newApi,
+                                                envs: { ...newApi.envs, [tempKey]: '' }
+                                            });
+                                        }}
+                                        className="mt-2 text-sm text-blue-600 hover:text-blue-800"
+                                    >
+                                        + 添加环境变量
+                                    </button>
+                                </div>
+
                                 <div className="flex justify-end space-x-3 mt-6">
                                     <button
                                         type="button"

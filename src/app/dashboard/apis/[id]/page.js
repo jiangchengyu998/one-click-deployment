@@ -353,16 +353,27 @@ export default function ApiDetail() {
                     <div className="space-y-6">
                         <div>
                             <h3 className="text-md font-medium text-gray-700 mb-2">环境变量</h3>
-                            <div className="bg-gray-50 p-4 rounded">
-                                <p className="text-sm text-gray-600">环境变量配置功能即将推出...</p>
+                            <div className="bg-gray-50 p-4 rounded space-y-2">
+                                {api.envs && Object.keys(api.envs).length > 0 ? (
+                                    Object.entries(api.envs).map(([key, value]) => (
+                                        <div key={key}
+                                             className="bg-white p-2 rounded shadow-sm text-sm font-mono text-gray-700 mb-1">
+                                            {key}: {String(value)}
+                                        </div>
+
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-600">暂无环境变量</p>
+                                )}
                             </div>
                         </div>
-                        <div>
-                            <h3 className="text-md font-medium text-gray-700 mb-2">自定义域名</h3>
-                            <div className="bg-gray-50 p-4 rounded">
-                                <p className="text-sm text-gray-600">自定义域名功能即将推出...</p>
-                            </div>
-                        </div>
+
+                        {/*<div>*/}
+                        {/*    <h3 className="text-md font-medium text-gray-700 mb-2">自定义域名</h3>*/}
+                        {/*    <div className="bg-gray-50 p-4 rounded">*/}
+                        {/*        <p className="text-sm text-gray-600">自定义域名功能即将推出...</p>*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
                         <div>
                             <h3 className="text-md font-medium text-gray-700 mb-2">危险操作</h3>
                             <div className="bg-red-50 p-4 rounded border border-red-200">

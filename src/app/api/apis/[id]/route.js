@@ -12,8 +12,10 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
+        const { id } = await params
+
         const api = await prisma.api.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: {
                 user: {
                     select: {

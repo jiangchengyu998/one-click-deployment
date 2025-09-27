@@ -37,7 +37,8 @@ export async function POST(request) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
-        const { name, gitUrl, gitToken } = await request.json();
+        // 解析请求体, 添加envs
+        const { name, gitUrl, gitToken, envs } = await request.json();
 
         // 检查用户配额
         const user = await prisma.user.findUnique({
@@ -53,7 +54,7 @@ export async function POST(request) {
         }
 
         // 生成域名
-        const domain = `${name}-${user.code}.yunduo.app`;
+        const domain = `${name}-${user.code}.ydphoto.com`;
 
         // 创建API记录
         const api = await prisma.api.create({
@@ -62,6 +63,7 @@ export async function POST(request) {
                 gitUrl,
                 gitToken,
                 domain,
+                envs,
                 userId: session.id,
             },
         });
