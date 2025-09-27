@@ -384,6 +384,35 @@ export default function AdminApis() {
                                 </div>
                             </div>
 
+                            {/*显示envs的信息*/}
+                            {showDetailModal.envs && Object.keys(showDetailModal.envs).length > 0 && (
+                                <div className="mt-6">
+                                    <h4 className="font-medium text-gray-700 mb-2">环境变量</h4>
+                                    <div className="bg-gray-50 p-3 rounded max-h-48 overflow-auto">
+                                        <table className="min-w-full divide-y divide-gray-200">
+                                            <thead>
+                                            <tr>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    变量名
+                                                </th>
+                                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    变量值
+                                                </th>
+                                            </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                            {Object.entries(showDetailModal.envs).map(([key, value]) => (
+                                                <tr key={key}>
+                                                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{key}</td>
+                                                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{value}</td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex justify-end mt-6">
                                 <button
                                     onClick={() => setShowDetailModal(null)}
