@@ -5,11 +5,11 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 
+
 export default function DatabaseDetail() {
     const [database, setDatabase] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
-    const [showApiPassword, setShowApiPassword] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const router = useRouter();
     const params = useParams();

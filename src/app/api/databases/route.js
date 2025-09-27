@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getUserSession, hashPassword } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import {encryptPassword} from "@/lib/db_password_utils";
 
 // 获取当前用户的数据库列表
 export async function GET(request) {
@@ -61,7 +62,8 @@ export async function POST(request) {
         }
 
         // 加密密码
-        const hashedPassword = await hashPassword(password);
+        // const hashedPassword = await hashPassword(password);
+        const hashedPassword = await encryptPassword(password);
         // const hashedApiPassword = await hashPassword(apiPassword);
 
         // 生成数据库主机地址（在实际应用中，这里应该调用数据库创建服务）

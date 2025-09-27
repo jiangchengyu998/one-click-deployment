@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import {decryptPassword} from "@/lib/db_password_utils";
 
 // 获取数据库详情
 export async function GET(request, { params }) {
@@ -12,8 +13,10 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
+        const { id } = await params;
+
         const database = await prisma.database.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: {
                 user: {
                     select: {
@@ -35,6 +38,7 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: '无权访问此数据库' }, { status: 403 });
         }
 
+        // database.password = decryptPassword(database.password); // 不返回密码字段
         return NextResponse.json(database);
     } catch (error) {
         console.error('获取数据库详情错误:', error);
