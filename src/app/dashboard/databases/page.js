@@ -17,8 +17,8 @@ export default function UserDatabases() {
     const [newDatabase, setNewDatabase] = useState({
         name: '',
         username: '',
-        password: '',
-        apiPassword: ''
+        password: ''
+        // apiPassword: ''
     });
 
     useEffect(() => {
@@ -75,8 +75,8 @@ export default function UserDatabases() {
                 setNewDatabase({
                     name: '',
                     username: '',
-                    password: '',
-                    apiPassword: ''
+                    password: ''
+                    // apiPassword: ''
                 });
                 fetchDatabases();
                 fetchUserQuota();
@@ -267,18 +267,18 @@ export default function UserDatabases() {
                                             placeholder="••••••••"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700">API访问密码</label>
-                                        <input
-                                            type="password"
-                                            required
-                                            value={newDatabase.apiPassword}
-                                            onChange={(e) => setNewDatabase({...newDatabase, apiPassword: e.target.value})}
-                                            className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                                            placeholder="••••••••"
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">用于API访问数据库的专用密码</p>
-                                    </div>
+                                    {/*<div>*/}
+                                    {/*    <label className="block text-sm font-medium text-gray-700">API访问密码</label>*/}
+                                    {/*    <input*/}
+                                    {/*        type="password"*/}
+                                    {/*        required*/}
+                                    {/*        value={newDatabase.apiPassword}*/}
+                                    {/*        onChange={(e) => setNewDatabase({...newDatabase, apiPassword: e.target.value})}*/}
+                                    {/*        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"*/}
+                                    {/*        placeholder="••••••••"*/}
+                                    {/*    />*/}
+                                    {/*    <p className="text-xs text-gray-500 mt-1">用于API访问数据库的专用密码</p>*/}
+                                    {/*</div>*/}
                                 </div>
                                 <div className="flex justify-end space-x-3 mt-6">
                                     <button

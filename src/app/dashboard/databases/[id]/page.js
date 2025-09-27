@@ -188,20 +188,20 @@ export default function DatabaseDetail() {
                                 </button>
                             </div>
                         </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-gray-600">API密码</span>
-                            <div className="flex items-center space-x-2">
-                <span className="font-medium font-mono">
-                  {showApiPassword ? database.apiPassword : '••••••••'}
-                </span>
-                                <button
-                                    onClick={() => setShowApiPassword(!showApiPassword)}
-                                    className="text-gray-400 hover:text-gray-600"
-                                >
-                                    <i className={`fas ${showApiPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
-                                </button>
-                            </div>
-                        </div>
+                        {/*<div className="flex justify-between items-center">*/}
+                        {/*    <span className="text-gray-600">API密码</span>*/}
+                        {/*    <div className="flex items-center space-x-2">*/}
+                        {/*        <span className="font-medium font-mono">*/}
+                        {/*          {showApiPassword ? database.apiPassword : '••••••••'}*/}
+                        {/*        </span>*/}
+                        {/*        <button*/}
+                        {/*            onClick={() => setShowApiPassword(!showApiPassword)}*/}
+                        {/*            className="text-gray-400 hover:text-gray-600"*/}
+                        {/*        >*/}
+                        {/*            <i className={`fas ${showApiPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>*/}
+                        {/*        </button>*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
                     </div>
                 </div>
 
