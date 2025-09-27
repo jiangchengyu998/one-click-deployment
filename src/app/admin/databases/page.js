@@ -259,7 +259,7 @@ export default function AdminDatabases() {
 
             {/* 数据库详情模态框 */}
             {showDetailModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50  flex items-center justify-center">
                     <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
                         <div className="mt-3">
                             <div className="flex justify-between items-center mb-4">
