@@ -14,6 +14,10 @@ export default function ApiDetail() {
     const router = useRouter();
     const params = useParams();
 
+    const [newEnvKey, setNewEnvKey] = useState('');
+    const [newEnvValue, setNewEnvValue] = useState('');
+
+
     useEffect(() => {
         fetchApiDetail();
         if (activeTab === 'logs') {
@@ -351,22 +355,123 @@ export default function ApiDetail() {
                 <div className="bg-white shadow rounded-lg p-6">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">API设置</h2>
                     <div className="space-y-6">
+
                         <div>
                             <h3 className="text-md font-medium text-gray-700 mb-2">环境变量</h3>
                             <div className="bg-gray-50 p-4 rounded space-y-2">
                                 {api.envs && Object.keys(api.envs).length > 0 ? (
                                     Object.entries(api.envs).map(([key, value]) => (
-                                        <div key={key}
-                                             className="bg-white p-2 rounded shadow-sm text-sm font-mono text-gray-700 mb-1">
-                                            {key}: {String(value)}
+                                        <div key={key} className="flex items-center space-x-2">
+                                            <input
+                                                type="text"
+                                                value={key}
+                                                readOnly
+                                                className="w-1/3 border border-gray-300 rounded px-2 py-1 bg-gray-100 text-sm font-mono"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={value}
+                                                onChange={(e) => {
+                                                    const newEnvs = {...api.envs, [key]: e.target.value};
+                                                    setApi({...api, envs: newEnvs});
+                                                }}
+                                                className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm font-mono"
+                                            />
+                                            <button
+                                                onClick={() => {
+                                                    const newEnvs = {...api.envs};
+                                                    delete newEnvs[key];
+                                                    setApi({...api, envs: newEnvs});
+                                                }}
+                                                className="text-red-500 hover:text-red-700 text-sm px-2"
+                                            >
+                                                删除
+                                            </button>
                                         </div>
-
                                     ))
                                 ) : (
                                     <p className="text-sm text-gray-600">暂无环境变量</p>
                                 )}
+
+                                {/* 新增环境变量 */}
+                                <div className="flex items-center space-x-2 mt-2">
+                                    <input
+                                        type="text"
+                                        placeholder="KEY"
+                                        value={newEnvKey || ''}
+                                        onChange={(e) => setNewEnvKey(e.target.value)}
+                                        className="w-1/3 border border-gray-300 rounded px-2 py-1 text-sm font-mono"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="VALUE"
+                                        value={newEnvValue || ''}
+                                        onChange={(e) => setNewEnvValue(e.target.value)}
+                                        className="flex-1 border border-gray-300 rounded px-2 py-1 text-sm font-mono"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (!newEnvKey) return;
+                                            const newEnvs = {...api.envs, [newEnvKey]: newEnvValue};
+                                            setApi({...api, envs: newEnvs});
+                                            setNewEnvKey('');
+                                            setNewEnvValue('');
+                                        }}
+                                        className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
+                                    >
+                                        添加
+                                    </button>
+                                </div>
+
+                                {/* 保存按钮 */}
+                                <div className="mt-4">
+                                    <button
+                                        onClick={async () => {
+                                            setActionLoading(true);
+                                            try {
+                                                const response = await fetch(`/api/apis/${params.id}`, {
+                                                    method: 'PATCH', // 或 PUT，根据你后端接口
+                                                    headers: {'Content-Type': 'application/json'},
+                                                    body: JSON.stringify({envs: api.envs}),
+                                                });
+                                                if (response.ok) {
+                                                    alert('环境变量已更新');
+                                                } else {
+                                                    const data = await response.json();
+                                                    alert(data.error || '更新失败');
+                                                }
+                                            } catch (err) {
+                                                alert('网络错误，请重试');
+                                            } finally {
+                                                setActionLoading(false);
+                                            }
+                                        }}
+                                        disabled={actionLoading}
+                                        className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+                                    >
+                                        {actionLoading ? '保存中...' : '保存环境变量'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
+
+
+                        {/*<div>*/}
+                        {/*    <h3 className="text-md font-medium text-gray-700 mb-2">环境变量</h3>*/}
+                        {/*    <div className="bg-gray-50 p-4 rounded space-y-2">*/}
+                        {/*        {api.envs && Object.keys(api.envs).length > 0 ? (*/}
+                        {/*            Object.entries(api.envs).map(([key, value]) => (*/}
+                        {/*                <div key={key}*/}
+                        {/*                     className="bg-white p-2 rounded shadow-sm text-sm font-mono text-gray-700 mb-1">*/}
+                        {/*                    {key}: {String(value)}*/}
+                        {/*                </div>*/}
+
+                        {/*            ))*/}
+                        {/*        ) : (*/}
+                        {/*            <p className="text-sm text-gray-600">暂无环境变量</p>*/}
+                        {/*        )}*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
 
                         {/*<div>*/}
                         {/*    <h3 className="text-md font-medium text-gray-700 mb-2">自定义域名</h3>*/}
