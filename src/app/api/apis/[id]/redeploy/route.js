@@ -47,14 +47,15 @@ export async function POST(request, { params }) {
 
 
         // api_information
-        const apiInfor = api.api_infor
-
+        const apiInfor = api.api_infor[0]
+        console.log('apiInfor:', apiInfor);
         // 构建参数字符串
         const query = new URLSearchParams({
             GIT_URL: api.gitUrl,
             API_PORT: apiInfor.serverPort,
             exe_node: apiInfor.execNode,
             branch: "main",
+            api_id: api.id,
             // Switch to stringify for envs
             envs: JSON.stringify(api.envs)
         }).toString();
