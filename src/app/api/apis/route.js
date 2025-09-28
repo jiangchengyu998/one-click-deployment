@@ -87,19 +87,6 @@ export async function POST(request) {
             }
         });
 
-        // 这里可以添加触发部署逻辑
-
-
-        // 创建api_infor记录
-        await prisma.apiInfor.create({
-            data: {
-                apiId: api.id,
-                serverIp: '100.95.91.54', // 默认值，可根据实际需求调整
-                serverPort: nextPort,
-                execNode: 'w-ubuntu',
-            }
-        });
-
         // 在实际应用中，这里应该调用部署服务
         const pipelineUrl = process.env.PIPELINE_URL;
         const jenkinsUser = process.env.JENKINS_USER;

@@ -44,30 +44,17 @@ export async function POST(request, { params }) {
         const jenkinsToken = process.env.JENKINS_TOKEN;
         const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
 
-        // const response = await fetch(pipelineUrl + '/job/deploy_api/build', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Authorization': `Basic ${basicAuth}`,
-        //         'Content-Type': 'application/json'
-        //     },
-        //     body: JSON.stringify({
-        //         "parameter": [
-        //             {
-        //                 "GIT_URL": params.gitUrl,
-        //                 "API_PORT": 3000,
-        //                 "exe_node": "w-ubuntu",
-        //                 "branch": "main",
-        //                 "envs": params.envs
-        //             }
-        //         ]
-        //     })
-        // });
+
+        // api_information
+        const apiInfor = await prisma.apiInfor.findUnique({
+            where: { apiId: id }
+        });
 
         // 构建参数字符串
         const query = new URLSearchParams({
             GIT_URL: api.gitUrl,
-            API_PORT: 3000,
-            exe_node: "w-ubuntu",
+            API_PORT: apiInfor.serverPort.toString(),
+            exe_node: apiInfor.execNode,
             branch: "main",
             // Switch to stringify for envs
             envs: JSON.stringify(api.envs)
@@ -89,14 +76,6 @@ export async function POST(request, { params }) {
         } else {
             console.error('触发Jenkins任务失败', response);
         }
-
-        // 模拟构建过程
-        // setTimeout(async () => {
-        //     await prisma.api.update({
-        //         where: { id: id },
-        //         data: { status: 'RUNNING' }
-        //     });
-        // }, 5000);
 
         return NextResponse.json({ message: 'API重新部署命令已发送' });
     } catch (error) {
