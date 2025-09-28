@@ -5,7 +5,7 @@ export function middleware(request) {
     const { pathname } = request.nextUrl
 
     // 需要排除的公开页面（不需要 token）
-    const publicPaths = ['/admin/login', '/admin/register', '/auth/login', '/auth/register']
+    const publicPaths = ['/admin/login', '/admin/register', '/auth/login', '/auth/register', '/apis/*/webhook']
 
     // 如果当前访问的路径在公开页面列表里，就直接放行
     if (publicPaths.some(path => pathname.startsWith(path))) {
