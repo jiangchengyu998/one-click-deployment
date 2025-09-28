@@ -4,10 +4,7 @@ dotenv.config();
 
 const nextConfig: NextConfig = {
   /* config options here */
-    output: "standalone"
-};
-
-module.exports = {
+    output: "standalone",
     env: {
         PIPELINE_URL: process.env.JENKINS_URL,
         JENKINS_TOKEN: process.env.JENKINS_TOKEN,
