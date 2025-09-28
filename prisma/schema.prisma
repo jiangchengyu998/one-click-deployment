@@ -54,6 +54,21 @@ model Api {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("apis")
+  apiInfor ApiInfor[]
+}
+
+model ApiInfor {
+  id         String   @id @default(cuid())
+  apiId      String
+  serverIp   String
+  serverPort Int
+  execNode   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  api Api @relation(fields: [apiId], references: [id], onDelete: Cascade)
+
+  @@map("api_infor")
 }
 
 model Database {

@@ -12,9 +12,11 @@ export async function POST(request, { params }) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
+        const { id } = await params;
+
         // 检查API是否存在
         const api = await prisma.api.findUnique({
-            where: { id: params.id }
+            where: { id: id }
         });
 
         if (!api) {
@@ -26,10 +28,9 @@ export async function POST(request, { params }) {
             return NextResponse.json({ error: '无权操作此API' }, { status: 403 });
         }
 
-        // 在实际应用中，这里应该调用部署服务来重新部署API
-        // 这里我们只是模拟重新部署过程，更新状态
+        // 更新API状态
         await prisma.api.update({
-            where: { id: params.id },
+            where: { id: id },
             data: {
                 status: 'BUILDING',
                 lastJobId: `job-${Date.now()}`,
@@ -37,13 +38,65 @@ export async function POST(request, { params }) {
             }
         });
 
+        // 读取环境变量
+        const pipelineUrl = process.env.PIPELINE_URL;
+        const jenkinsUser = process.env.JENKINS_USER;
+        const jenkinsToken = process.env.JENKINS_TOKEN;
+        const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
+
+        // const response = await fetch(pipelineUrl + '/job/deploy_api/build', {
+        //     method: 'POST',
+        //     headers: {
+        //         'Authorization': `Basic ${basicAuth}`,
+        //         'Content-Type': 'application/json'
+        //     },
+        //     body: JSON.stringify({
+        //         "parameter": [
+        //             {
+        //                 "GIT_URL": params.gitUrl,
+        //                 "API_PORT": 3000,
+        //                 "exe_node": "w-ubuntu",
+        //                 "branch": "main",
+        //                 "envs": params.envs
+        //             }
+        //         ]
+        //     })
+        // });
+
+        // 构建参数字符串
+        const query = new URLSearchParams({
+            GIT_URL: api.gitUrl,
+            API_PORT: 3000,
+            exe_node: "w-ubuntu",
+            branch: "main",
+            // Switch to stringify for envs
+            envs: JSON.stringify(api.envs)
+        }).toString();
+
+        const response = await fetch(
+            `${pipelineUrl}/job/deploy_api/buildWithParameters?${query}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${basicAuth}`
+                }
+            }
+        );
+
+
+        if (response.status === 201) {
+            console.log('触发Jenkins任务成功');
+        } else {
+            console.error('触发Jenkins任务失败', response);
+        }
+
         // 模拟构建过程
-        setTimeout(async () => {
-            await prisma.api.update({
-                where: { id: params.id },
-                data: { status: 'RUNNING' }
-            });
-        }, 10000);
+        // setTimeout(async () => {
+        //     await prisma.api.update({
+        //         where: { id: id },
+        //         data: { status: 'RUNNING' }
+        //     });
+        // }, 5000);
 
         return NextResponse.json({ message: 'API重新部署命令已发送' });
     } catch (error) {

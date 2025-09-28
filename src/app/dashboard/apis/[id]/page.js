@@ -86,7 +86,7 @@ export default function ApiDetail() {
 
     const redeployApi = async () => {
         setActionLoading(true);
-
+        console.log('Redeploying API with ID:', params.id);
         try {
             const response = await fetch(`/api/apis/${params.id}/redeploy`, {
                 method: 'POST',
@@ -169,6 +169,7 @@ export default function ApiDetail() {
                         <button
                             onClick={redeployApi}
                             disabled={actionLoading || api.status !== 'RUNNING'}
+                            // disabled={actionLoading || api.status !== 'RUNNING'}
                             className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 disabled:opacity-50"
                         >
                             {actionLoading ? '部署中...' : '重新部署'}
