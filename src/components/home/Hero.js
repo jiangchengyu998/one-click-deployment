@@ -67,7 +67,7 @@ export default function Hero() {
                                                 <i className="fas fa-code"></i>
                                                 <div>
                                                     <strong>用户管理API</strong>
-                                                    <span>https://user-api.yunduo.app</span>
+                                                    <span>https://user-api.ydphoto.com</span>
                                                 </div>
                                             </div>
                                             <button className="btn-small">查看</button>

@@ -8,7 +8,7 @@ import { prisma } from '@/lib/db';
 export async function GET(request) {
     try {
         const session = await getUserSession(request);
-        console.log('api User session:', session);
+        // console.log('api User session:', session);
 
         if (!session || !session.id) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
@@ -68,8 +68,124 @@ export async function POST(request) {
             },
         });
 
+
+        // serverPort 获取所有api_infor记录 中最大的 port + 1，简单实现如下
+        const maxPortRecord = await prisma.apiInfor.findFirst({
+            orderBy: { serverPort: 'desc' },
+        });
+        const nextPort = maxPortRecord ? maxPortRecord.serverPort + 1 : 3004;
+
+        console.log('Next available port:', nextPort);
+
+        // 创建api_infor记录
+        await prisma.apiInfor.create({
+            data: {
+                apiId: api.id,
+                serverIp: '100.95.91.54', // 默认值，可根据实际需求调整
+                serverPort: nextPort,
+                execNode: 'w-ubuntu',
+            }
+        });
+
         // 这里可以添加触发部署逻辑
-        // await triggerDeployment(api);
+
+
+        // 创建api_infor记录
+        await prisma.apiInfor.create({
+            data: {
+                apiId: api.id,
+                serverIp: '100.95.91.54', // 默认值，可根据实际需求调整
+                serverPort: nextPort,
+                execNode: 'w-ubuntu',
+            }
+        });
+
+        // 在实际应用中，这里应该调用部署服务
+        const pipelineUrl = process.env.PIPELINE_URL;
+        const jenkinsUser = process.env.JENKINS_USER;
+        const jenkinsToken = process.env.JENKINS_TOKEN;
+        const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
+
+        // 1. 调用http://192.168.101.51:8080/job/add_rr/ pipeline 创建dns记录
+        // 构建参数字符串
+        const query = new URLSearchParams({
+            RR: api.name+'-'+user.code,
+            exe_node: "w-ubuntu"
+        }).toString();
+
+        const response = await fetch(
+            `${pipelineUrl}/job/add_rr/buildWithParameters?${query}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${basicAuth}`
+                }
+            }
+        );
+
+
+        if (response.status === 201) {
+            console.log('Jenkins创建DNS记录成功:', response);
+        } else {
+            console.error('调用Jenkins创建DNS记录失败:', response.status, response.statusText);
+            throw new Error('调用Jenkins创建DNS记录失败');
+        }
+
+        // 2. 调用 http://192.168.101.51:8080/job/add_nginx_file/ pipeline 创建nginx配置文件
+        // 构建参数字符串
+        const queryAddNginx = new URLSearchParams({
+            api_name: api.name+'-'+user.code,
+            api_port: nextPort,
+            server_ip: '100.95.91.54',
+            exe_node: "w-ubuntu"
+        }).toString();
+
+        const responseAddNginx = await fetch(
+            `${pipelineUrl}/job/add_nginx_file/buildWithParameters?${queryAddNginx}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${basicAuth}`
+                }
+            }
+        );
+
+
+        if (responseAddNginx.status === 201) {
+            console.log('Jenkins创建Nginx配置文件成功:', responseAddNginx);
+        } else {
+            console.error('调用Jenkins创建Nginx配置文件失败:', responseAddNginx.status, responseAddNginx.statusText);
+            throw new Error('调用Jenkins创建Nginx配置文件失败');
+        }
+
+        // 3. 调用http://192.168.101.51:8080/job/deploy_api/  部署服务
+        // 构建参数字符串
+        const queryDeployApi = new URLSearchParams({
+            GIT_URL: api.gitUrl,
+            API_PORT: nextPort,
+            exe_node: "w-ubuntu",
+            branch: "main",
+            // Switch to stringify for envs
+            envs: JSON.stringify(api.envs)
+        }).toString();
+
+        const responseDeployApi = await fetch(
+            `${pipelineUrl}/job/deploy_api/buildWithParameters?${queryDeployApi}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${basicAuth}`
+                }
+            }
+        );
+
+
+        if (responseDeployApi.status === 201) {
+            console.log('Jenkins部署服务成功:', responseDeployApi);
+        } else {
+            console.error('调用Jenkins部署服务失败:', responseDeployApi.status, responseDeployApi.statusText);
+            throw new Error('调用Jenkins部署服务失败');
+        }
 
         return NextResponse.json(api, { status: 201 });
     } catch (error) {

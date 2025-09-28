@@ -23,7 +23,7 @@ export default function AdminApis() {
             const response = await fetch('/api/admin/apis');
             if (response.ok) {
                 const data = await response.json();
-                console.log('Fetched APIs:', data);
+                // console.log('Fetched APIs:', data);
                 setApis(data);
             } else if (response.status === 401) {
                 router.push('/admin/login');

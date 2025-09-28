@@ -284,7 +284,7 @@ export default function UserApis() {
 
             {/* 创建API模态框 */}
             {showCreateModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
                     <div className="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
                         <div className="mt-3">
                             <h3 className="text-lg font-medium text-gray-900 mb-4">部署新API</h3>
@@ -300,7 +300,7 @@ export default function UserApis() {
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                                             placeholder="my-api"
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">将用于生成域名: {newApi.name || 'my-api'}-您的代码.yunduo.app</p>
+                                        <p className="text-xs text-gray-500 mt-1">将用于生成域名: {newApi.name || 'my-api'}-您的代码.ydphoto.com</p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">Git仓库地址</label>

@@ -99,7 +99,7 @@ export async function PATCH(request, { params }) {
         const { id } = await params;
         const { envs } = await request.json();
 
-        console.log('Received envs update for API:', id, envs);
+        // console.log('Received envs update for API:', id, envs);
 
         // 检查API是否存在且用户有权限
         const api = await prisma.api.findUnique({
@@ -123,7 +123,7 @@ export async function PATCH(request, { params }) {
             }
         });
 
-        console.log('API环境变量更新成功:', updatedApi.id);
+        // console.log('API环境变量更新成功:', updatedApi.id);
 
         return NextResponse.json(updatedApi);
     } catch (error) {

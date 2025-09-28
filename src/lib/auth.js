@@ -27,7 +27,7 @@ export async function verifyPassword(password, hashedPassword) {
 // 获取用户会话
 export async function getUserSession(request) {
     try {
-        console.log('Getting user session')
+        // console.log('Getting user session')
         const token = request.cookies.get('user-token')?.value
 
         if (!token) {
@@ -35,7 +35,7 @@ export async function getUserSession(request) {
         }
 
         const decoded = verifyToken(token)
-        console.log('Decoded user token:', decoded)
+        // console.log('Decoded user token:', decoded)
         if (!decoded || decoded.role !== 'user') {
             return null
         }
@@ -72,18 +72,18 @@ export async function getServerSession(request) {
     // 例如从cookie或header中获取token并验证
     try {
 
-        console.log('Getting server session')
+        // console.log('Getting server session')
 
         const token = request.cookies.get('user-token')?.value
 
         // debugging
-        console.log('Token from cookies:', token)
+        // console.log('Token from cookies:', token)
         if (!token) {
             return null
         }
 
         const decoded = verifyToken(token)
-        console.log('Decoded token:', decoded)
+        // console.log('Decoded token:', decoded)
         if (!decoded || decoded.role !== 'user') {
             return null
         }

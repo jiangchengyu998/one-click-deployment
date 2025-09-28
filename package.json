@@ -29,6 +29,6 @@
     "typescript": "^5.9.2"
   },
   "prisma": {
-    "seed": "ts-node scripts/seed.ts"
+    "seed": "ts-node --loader ts-node/esm scripts/seed.ts"
   }
 }

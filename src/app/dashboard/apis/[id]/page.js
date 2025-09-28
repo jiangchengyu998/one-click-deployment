@@ -86,7 +86,7 @@ export default function ApiDetail() {
 
     const redeployApi = async () => {
         setActionLoading(true);
-        console.log('Redeploying API with ID:', params.id);
+        // console.log('Redeploying API with ID:', params.id);
         try {
             const response = await fetch(`/api/apis/${params.id}/redeploy`, {
                 method: 'POST',

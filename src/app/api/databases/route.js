@@ -67,7 +67,7 @@ export async function POST(request) {
         // const hashedApiPassword = await hashPassword(apiPassword);
 
         // 生成数据库主机地址（在实际应用中，这里应该调用数据库创建服务）
-        const host = `db-${Math.random().toString(36).substring(2, 8)}.yunduo.app`;
+        const host = `db-${Math.random().toString(36).substring(2, 8)}.ydphoto.com`;
 
         // 创建数据库记录
         const database = await prisma.database.create({
