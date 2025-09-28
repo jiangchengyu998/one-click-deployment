@@ -94,8 +94,8 @@ export async function POST(request) {
 
         console.log('Next available port:', nextPort);
 
-        // 创建api_infor记录
-        await prisma.apiInfor.create({
+        // 创建api_infor记录, execNode 先写死为 w-ubuntu,后续可以让用户选择, 返回值
+        const apiInfor = await prisma.apiInfor.create({
             data: {
                 apiId: api.id,
                 serverIp: '100.95.91.54', // 默认值，可根据实际需求调整
@@ -114,7 +114,7 @@ export async function POST(request) {
         // 构建参数字符串
         const query = new URLSearchParams({
             RR: api.name+'-'+user.code,
-            exe_node: "w-ubuntu"
+            exe_node: apiInfor.execNode
         }).toString();
 
         const response = await fetch(
@@ -140,8 +140,8 @@ export async function POST(request) {
         const queryAddNginx = new URLSearchParams({
             api_name: api.name+'-'+user.code,
             api_port: nextPort,
-            server_ip: '100.95.91.54',
-            exe_node: "w-ubuntu"
+            server_ip: apiInfor.serverIp,
+            exe_node: apiInfor.execNode
         }).toString();
 
         const responseAddNginx = await fetch(
@@ -167,8 +167,9 @@ export async function POST(request) {
         const queryDeployApi = new URLSearchParams({
             GIT_URL: api.gitUrl,
             API_PORT: nextPort,
-            exe_node: "w-ubuntu",
-            branch: "main",
+            exe_node: apiInfor.execNode,
+            branch: api.branch,
+            api_id: api.id,
             // Switch to stringify for envs
             envs: JSON.stringify(api.envs)
         }).toString();

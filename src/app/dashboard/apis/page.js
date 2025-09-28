@@ -18,7 +18,8 @@ export default function UserApis() {
         name: '',
         gitUrl: '',
         gitToken: '',
-        envs: {}, // 新增环境变量字段
+        branch: 'main', // 添加默认分支
+        envs: [], // 新增环境变量字段
         dockerfile: 'default' // default 或 custom
     });
 
@@ -63,12 +64,26 @@ export default function UserApis() {
         setActionLoading(true);
 
         try {
+
+            // 将 envs 数组转换为对象
+            const envsObject = {};
+            newApi.envs.forEach(env => {
+                if (env.key && env.key.trim() !== '') {
+                    envsObject[env.key.trim()] = env.value;
+                }
+            });
+
+            const payload = {
+                ...newApi,
+                envs: envsObject
+            };
+
             const response = await fetch('/api/apis', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(newApi),
+                body: JSON.stringify(payload),
             });
 
             if (response.ok) {
@@ -153,26 +168,33 @@ export default function UserApis() {
         }
     };
 
-    // --- 新增: 环境变量操作 ---
+    // --- 修改环境变量操作 ---
     const handleAddEnv = () => {
-        const newKey = `KEY${Object.keys(newApi.envs).length + 1}`;
+        const newEnv = {
+            id: Date.now().toString(), // 使用时间戳作为唯一ID
+            key: '',
+            value: ''
+        };
         setNewApi({
             ...newApi,
-            envs: { ...newApi.envs, [newKey]: '' }
+            envs: [...newApi.envs, newEnv]
         });
     };
 
-    const handleEnvChange = (key, value) => {
+    const handleEnvChange = (id, field, value) => {
         setNewApi({
             ...newApi,
-            envs: { ...newApi.envs, [key]: value }
+            envs: newApi.envs.map(env =>
+                env.id === id ? { ...env, [field]: value } : env
+            )
         });
     };
 
-    const handleRemoveEnv = (key) => {
-        const updatedEnvs = { ...newApi.envs };
-        delete updatedEnvs[key];
-        setNewApi({ ...newApi, envs: updatedEnvs });
+    const handleRemoveEnv = (id) => {
+        setNewApi({
+            ...newApi,
+            envs: newApi.envs.filter(env => env.id !== id)
+        });
     };
 
     if (loading) {
@@ -325,40 +347,43 @@ export default function UserApis() {
                                         <p className="text-xs text-gray-500 mt-1">私有仓库需要提供token</p>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700">Dockerfile配置</label>
-                                        <select
-                                            value={newApi.dockerfile}
-                                            onChange={(e) => setNewApi({...newApi, dockerfile: e.target.value})}
+                                        <label className="block text-sm font-medium text-gray-700">Git分支 (可选)</label>
+                                        <input
+                                            type="text"
+                                            value={newApi.branch}
+                                            onChange={(e) => setNewApi({...newApi, branch: e.target.value})}
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                                        >
-                                            <option value="default">使用默认Dockerfile</option>
-                                            <option value="custom">使用仓库中的Dockerfile</option>
-                                        </select>
+                                            placeholder="main"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">默认分支为main</p>
                                     </div>
+                                    {/*<div>*/}
+                                    {/*    <label className="block text-sm font-medium text-gray-700">Dockerfile配置</label>*/}
+                                    {/*    <select*/}
+                                    {/*        value={newApi.dockerfile}*/}
+                                    {/*        onChange={(e) => setNewApi({...newApi, dockerfile: e.target.value})}*/}
+                                    {/*        className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"*/}
+                                    {/*    >*/}
+                                    {/*        <option value="default">使用默认Dockerfile</option>*/}
+                                    {/*        <option value="custom">使用仓库中的Dockerfile</option>*/}
+                                    {/*    </select>*/}
+                                    {/*</div>*/}
                                 </div>
+                                {/* 环境变量配置 */}
                                 {/* 环境变量配置 */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">环境变量</label>
                                     <div className="space-y-2 mt-2">
-                                        {Object.keys(newApi.envs).length === 0 && (
+                                        {newApi.envs.length === 0 && (
                                             <p className="text-xs text-gray-500">尚未添加环境变量</p>
                                         )}
-                                        {Object.entries(newApi.envs).map(([key, value]) => (
-                                            <div key={key} className="flex space-x-2">
+                                        {newApi.envs.map((env) => (
+                                            <div key={env.id} className="flex space-x-2"> {/* 使用 env.id 作为 key */}
                                                 {/* Key 输入框 */}
                                                 <input
                                                     type="text"
-                                                    value={key}
-                                                    onChange={(e) => {
-                                                        const newKey = e.target.value.trim();
-                                                        const updatedEnvs = { ...newApi.envs };
-                                                        const oldValue = updatedEnvs[key];
-                                                        delete updatedEnvs[key]; // 删除旧 key
-                                                        if (newKey) {
-                                                            updatedEnvs[newKey] = oldValue; // 设置新 key
-                                                        }
-                                                        setNewApi({ ...newApi, envs: updatedEnvs });
-                                                    }}
+                                                    value={env.key}
+                                                    onChange={(e) => handleEnvChange(env.id, 'key', e.target.value)}
                                                     className="w-1/3 border border-gray-300 rounded-md px-2 py-1"
                                                     placeholder="变量名 (如 DB_USER)"
                                                 />
@@ -366,8 +391,8 @@ export default function UserApis() {
                                                 {/* Value 输入框 */}
                                                 <input
                                                     type="text"
-                                                    value={value}
-                                                    onChange={(e) => handleEnvChange(key, e.target.value)}
+                                                    value={env.value}
+                                                    onChange={(e) => handleEnvChange(env.id, 'value', e.target.value)}
                                                     className="w-2/3 border border-gray-300 rounded-md px-2 py-1"
                                                     placeholder="值"
                                                 />
@@ -375,7 +400,7 @@ export default function UserApis() {
                                                 {/* 删除按钮 */}
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleRemoveEnv(key)}
+                                                    onClick={() => handleRemoveEnv(env.id)}
                                                     className="text-red-500 hover:text-red-700"
                                                 >
                                                     删除
@@ -386,20 +411,12 @@ export default function UserApis() {
 
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            // 新增一条随机 key 避免冲突
-                                            const tempKey = `NEW_KEY_${Date.now()}`;
-                                            setNewApi({
-                                                ...newApi,
-                                                envs: { ...newApi.envs, [tempKey]: '' }
-                                            });
-                                        }}
+                                        onClick={handleAddEnv}
                                         className="mt-2 text-sm text-blue-600 hover:text-blue-800"
                                     >
                                         + 添加环境变量
                                     </button>
                                 </div>
-
                                 <div className="flex justify-end space-x-3 mt-6">
                                     <button
                                         type="button"
