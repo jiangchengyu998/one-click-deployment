@@ -16,7 +16,8 @@ export async function POST(request, { params }) {
 
         // 检查API是否存在
         const api = await prisma.api.findUnique({
-            where: { id: id }
+            where: { id: id },
+            include: { api_infor: true }
         });
 
         if (!api) {
@@ -46,14 +47,12 @@ export async function POST(request, { params }) {
 
 
         // api_information
-        const apiInfor = await prisma.apiInfor.findUnique({
-            where: { apiId: id }
-        });
+        const apiInfor = api.api_infor
 
         // 构建参数字符串
         const query = new URLSearchParams({
             GIT_URL: api.gitUrl,
-            API_PORT: apiInfor.serverPort.toString(),
+            API_PORT: apiInfor.serverPort,
             exe_node: apiInfor.execNode,
             branch: "main",
             // Switch to stringify for envs
