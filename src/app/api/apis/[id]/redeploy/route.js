@@ -39,6 +39,23 @@ export async function POST(request, { params }) {
             }
         });
 
+        // 30分钟后如果状态还在BUILDING，自动改为ERROR，防止卡死
+        setTimeout(async () => {
+            // 重新获取api状态，防止覆盖掉已经变更的状态
+            const currentApi = await prisma.api.findUnique({
+                where: { id: api.id }
+            });
+
+            if (currentApi.status === 'BUILDING') {
+                console.log('API部署超时，自动设置为ERROR状态，API ID:', currentApi.id);
+                await prisma.api.update({
+                    where: { id: currentApi.id },
+                    data: { status: 'ERROR' }
+                });
+            }
+
+        }, 30*60*1000);
+
         // 读取环境变量
         const pipelineUrl = process.env.JENKINS_URL;
         const jenkinsUser = process.env.JENKINS_USER;
@@ -76,23 +93,6 @@ export async function POST(request, { params }) {
         } else {
             console.error('触发Jenkins任务失败', response);
         }
-
-        // 30分钟后如果状态还在BUILDING，自动改为ERROR，防止卡死
-        setTimeout(async () => {
-            // 重新获取api状态，防止覆盖掉已经变更的状态
-            const currentApi = await prisma.api.findUnique({
-                where: { id: api.id }
-            });
-
-            if (currentApi.status === 'BUILDING') {
-                console.log('API部署超时，自动设置为ERROR状态，API ID:', currentApi.id);
-                await prisma.api.update({
-                    where: { id: currentApi.id },
-                    data: { status: 'ERROR' }
-                });
-            }
-
-        }, 30*60*1000);
 
         return NextResponse.json({ message: 'API重新部署命令已发送' });
     } catch (error) {
