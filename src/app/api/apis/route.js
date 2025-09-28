@@ -174,6 +174,23 @@ export async function POST(request) {
             throw new Error('调用Jenkins部署服务失败');
         }
 
+        // 30分钟后如果状态还在BUILDING，自动改为ERROR，防止卡死
+        setTimeout(async () => {
+            // 重新获取api状态，防止覆盖掉已经变更的状态
+            const currentApi = await prisma.api.findUnique({
+                where: { id: api.id }
+            });
+
+            if (currentApi.status === 'BUILDING') {
+                console.log('API部署超时，自动设置为ERROR状态，API ID:', currentApi.id);
+                await prisma.api.update({
+                    where: { id: currentApi.id },
+                    data: { status: 'ERROR' }
+                });
+            }
+
+        }, 30*60*1000);
+
         return NextResponse.json(api, { status: 201 });
     } catch (error) {
         console.error('创建API错误:', error);
