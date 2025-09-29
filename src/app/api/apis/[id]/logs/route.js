@@ -30,14 +30,14 @@ export async function GET(request, { params }) {
         }
 
         // 从pipeline中获取日志
-        const pipelineUrl = process.env.PIPELINE_URL;
+        const jenkinsUrl = process.env.JENKINS_URL;
         const jenkinsUser = process.env.JENKINS_USER;
         const jenkinsToken = process.env.JENKINS_TOKEN;
 
         console.log('API信息:', {
             apiId: api.id,
             lastJobId: api.lastJobId,
-            pipelineUrl: pipelineUrl,
+            pipelineUrl: jenkinsUrl,
             jenkinsUser: jenkinsUser ? '已设置' : '未设置'
         });
 
@@ -47,9 +47,9 @@ export async function GET(request, { params }) {
         }
 
         // 检查必要的环境变量
-        if (!pipelineUrl || !jenkinsUser || !jenkinsToken) {
+        if (!jenkinsUrl || !jenkinsUser || !jenkinsToken) {
             console.error('缺少必要的环境变量:', {
-                hasPipelineUrl: !!pipelineUrl,
+                hasPipelineUrl: !!jenkinsUrl,
                 hasJenkinsUser: !!jenkinsUser,
                 hasJenkinsToken: !!jenkinsToken
             });
@@ -59,10 +59,10 @@ export async function GET(request, { params }) {
         const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
 
         // Jenkins API 通常使用 GET 请求获取日志
-        const jenkinsUrl = `${pipelineUrl}/job/deploy_api/${buildNumber}/consoleText`;
-        console.log('请求Jenkins URL:', jenkinsUrl);
+        const jenkinsUrlForLog = `${jenkinsUrl}/job/deploy_api/${buildNumber}/consoleText`;
+        console.log('请求Jenkins URL:', jenkinsUrlForLog);
 
-        const response = await fetch(jenkinsUrl, {
+        const response = await fetch(jenkinsUrlForLog, {
             method: 'GET', // 改为 GET 请求
             headers: {
                 'Authorization': `Basic ${basicAuth}`,
