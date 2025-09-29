@@ -108,7 +108,18 @@ export async function GET(request, { params }) {
 
         // 解析日志 - 更灵活的解析方式
         const logLines = logs.split('\n');
-        const parsedLogs = logLines.map((line, index) => {
+
+        // 对包含 ‘环境变量’ 或者 ydphoto 的行进行特殊处理，将一整行使用****代替
+        const envVarKeywords = ['环境变量', 'ydphoto', 'deploy.sh', 'export ', 'SECRET', 'KEY', 'TOKEN', 'PASSWORD', 'PWD', 'AWS_', 'GCP_', 'AZURE_'];
+        const sanitizedLogLines = logLines.map(line => {
+            if (envVarKeywords.some(keyword => line.includes(keyword))) {
+                return '****';
+            }
+            return line;
+        });
+
+
+        const parsedLogs = sanitizedLogLines.map((line, index) => {
             // 尝试多种日志格式的解析
             let timestamp = new Date();
             let level = 'INFO';
