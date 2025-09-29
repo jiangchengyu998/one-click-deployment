@@ -1,6 +1,7 @@
 // src/app/api/apis/[id]/logs/route.js
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 
 // 获取API日志
 export async function GET(request, { params }) {
