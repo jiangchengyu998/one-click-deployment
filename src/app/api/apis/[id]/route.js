@@ -77,6 +77,35 @@ export async function DELETE(request, { params }) {
             where: { id: id }
         });
 
+        const pipelineUrl = process.env.JENKINS_URL;
+        const jenkinsUser = process.env.JENKINS_USER;
+        const jenkinsToken = process.env.JENKINS_TOKEN;
+        const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
+
+        // 1. 调用http://192.168.101.51:8080/job/delete_api/ pipeline 删除API相关资源
+        // 构建参数字符串
+        const query = new URLSearchParams({
+            api_name: api.name,
+            RR: api.name
+        }).toString();
+
+        const response = await fetch(
+            `${pipelineUrl}/job/delete_api/buildWithParameters?${query}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${basicAuth}`
+                }
+            }
+        );
+
+        if (response.status === 201 || response.status === 200) {
+            console.log('调用Jenkins删除API相关资源成功');
+        } else {
+            console.error('调用Jenkins删除API相关资源失败:', response.status, response.statusText);
+        }
+
+
         return NextResponse.json({ message: 'API删除成功' });
     } catch (error) {
         console.error('删除API错误:', error);

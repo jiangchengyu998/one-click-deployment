@@ -2,7 +2,6 @@
 import { NextResponse } from 'next/server';
 import { getUserSession, hashPassword } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import {encryptPassword} from "@/lib/db_password_utils";
 
 // 获取当前用户的数据库列表
 export async function GET(request) {
