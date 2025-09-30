@@ -478,16 +478,16 @@ export default function ApiDetail() {
 
             {/* 日志标签页 */}
             {activeTab === 'logs' && (
-                <div className="bg-white shadow rounded-lg p-6">
+                <div className="bg-white shadow rounded-lg p-6 flex flex-col h-full">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">部署日志</h2>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded font-mono text-sm h-96 overflow-y-auto">
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded font-mono text-sm h-[calc(100vh-255px)] overflow-y-auto">
                         {logs.length > 0 ? (
                             logs.map((log, index) => (
                                 <div key={index} className="mb-1">
-                                    <span className="text-gray-400">[{new Date(log.timestamp).toLocaleString()}]</span>{' '}
+                                    {/*<span className="text-gray-400">[{new Date(log.timestamp).toLocaleString()}]</span>{' '}*/}
                                     <span className={log.level === 'ERROR' ? 'text-red-400' : 'text-green-400'}>
-                    {log.message}
-                  </span>
+                                        {log.message}
+                                    </span>
                                 </div>
                             ))
                         ) : (
