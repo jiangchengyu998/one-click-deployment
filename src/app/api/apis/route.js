@@ -105,7 +105,7 @@ export async function POST(request) {
         });
 
         // 在实际应用中，这里应该调用部署服务
-        const pipelineUrl = process.env.PIPELINE_URL;
+        const pipelineUrl = process.env.JENKINS_URL;
         const jenkinsUser = process.env.JENKINS_USER;
         const jenkinsToken = process.env.JENKINS_TOKEN;
         const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');

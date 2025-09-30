@@ -58,9 +58,12 @@ export async function DELETE(request, { params }) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
+        const { id } = await params;
+
+
         // 检查数据库是否存在
         const database = await prisma.database.findUnique({
-            where: { id: params.id }
+            where: { id: id }
         });
 
         if (!database) {
@@ -74,7 +77,7 @@ export async function DELETE(request, { params }) {
 
         // 删除数据库
         await prisma.database.delete({
-            where: { id: params.id }
+            where: { id: id }
         });
 
         return NextResponse.json({ message: '数据库删除成功' });

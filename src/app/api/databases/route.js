@@ -62,12 +62,12 @@ export async function POST(request) {
         }
 
         // 加密密码
-        // const hashedPassword = await hashPassword(password);
-        const hashedPassword = await encryptPassword(password);
+        const hashedPassword = await hashPassword(password);
+        // const hashedPassword = await encryptPassword(password);
         // const hashedApiPassword = await hashPassword(apiPassword);
 
         // 生成数据库主机地址（在实际应用中，这里应该调用数据库创建服务）
-        const host = `db-${Math.random().toString(36).substring(2, 8)}.ydphoto.com`;
+        const host = `ydphoto.com`;
 
         // 创建数据库记录
         const database = await prisma.database.create({
@@ -89,7 +89,63 @@ export async function POST(request) {
                 where: { id: database.id },
                 data: { status: 'RUNNING' }
             });
-        }, 5000);
+        }, 10000);
+
+        const pipelineUrl = process.env.JENKINS_URL;
+        const jenkinsUser = process.env.JENKINS_USER;
+        const jenkinsToken = process.env.JENKINS_TOKEN;
+        const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
+
+        // 1. 调用http://192.168.101.51:8080/job/create_mysql_user/ pipeline 创建数据库用户
+        // 构建参数字符串
+        const query = new URLSearchParams({
+            MYSQL_USER: username,
+            MYSQL_PASSWORD: password
+        }).toString();
+
+        const response = await fetch(
+            `${pipelineUrl}/job/create_mysql_user/buildWithParameters?${query}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Basic ${basicAuth}`
+                }
+            }
+        );
+
+        if (response.status === 201 || response.status === 200) {
+            console.log('调用Jenkins创建数据库用户成功');
+        } else {
+            console.error('调用Jenkins创建数据库用户失败:', response.status, response.statusText);
+        }
+
+        // 我想让上一条pipeline执行完毕后再执行下一条，所以加了个延时10秒
+        setTimeout(async () => {
+
+            // 2. 调用http://192.168.101.51:8080/job/create_mysql_database/ pipeline 创建数据库
+            // 构建参数字符串
+            const query_db = new URLSearchParams({
+                MYSQL_USER: username,
+                DB_NAME: name
+            }).toString();
+
+            const response_user = await fetch(
+                `${pipelineUrl}/job/create_mysql_database/buildWithParameters?${query_db}`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Basic ${basicAuth}`
+                    }
+                }
+            );
+
+            if (response_user.status === 201 || response_user.status === 200) {
+                console.log('调用Jenkins创建数据库成功');
+            } else {
+                console.error('调用Jenkins创建数据库失败:', response_user.status, response_user.statusText);
+            }
+
+        }, 7000);
 
         return NextResponse.json(database, { status: 201 });
     } catch (error) {
