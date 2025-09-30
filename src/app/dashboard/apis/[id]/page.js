@@ -238,7 +238,7 @@ export default function ApiDetail() {
                     <div className="space-x-2">
                         <button
                             onClick={redeployApi}
-                            disabled={actionLoading || api.status !== 'RUNNING'|| api.status !== 'ERROR'}
+                            disabled={actionLoading}
                             className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 disabled:opacity-50"
                         >
                             {actionLoading ? '部署中...' : '重新部署'}
