@@ -71,7 +71,7 @@ export async function POST(request, { params }) {
             GIT_URL: api.gitUrl,
             API_PORT: apiInfor.serverPort,
             exe_node: apiInfor.execNode,
-            branch: "main",
+            branch: api.branch || 'main',
             api_id: api.id,
             gitToken: api.gitToken || '',
             // Switch to stringify for envs
