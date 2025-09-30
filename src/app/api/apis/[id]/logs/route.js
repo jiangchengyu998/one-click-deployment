@@ -110,7 +110,7 @@ export async function GET(request, { params }) {
         const logLines = logs.split('\n');
 
         // 对包含 ‘环境变量’ 或者 ydphoto 的行进行特殊处理，将一整行使用****代替
-        const envVarKeywords = ['环境变量', 'ydphoto', 'deploy.sh', 'export ', 'SECRET', 'KEY', 'TOKEN', 'PASSWORD', 'PWD', 'AWS_', 'GCP_', 'AZURE_'];
+        const envVarKeywords = ['oauth2','环境变量', 'ydphoto', 'deploy.sh', 'export ', 'SECRET', 'KEY', 'TOKEN', 'PASSWORD', 'PWD', 'AWS_', 'GCP_', 'AZURE_'];
         const sanitizedLogLines = logLines.map(line => {
             if (envVarKeywords.some(keyword => line.includes(keyword))) {
                 return '****';
