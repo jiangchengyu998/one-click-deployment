@@ -16,7 +16,10 @@ export default function ApiDetail() {
 
     const [newEnvKey, setNewEnvKey] = useState('');
     const [newEnvValue, setNewEnvValue] = useState('');
-
+    const [editingBranch, setEditingBranch] = useState('');
+    const [isEditingBranch, setIsEditingBranch] = useState(false);
+    const [editingToken, setEditingToken] = useState('');
+    const [isEditingToken, setIsEditingToken] = useState(false);
 
     useEffect(() => {
         fetchApiDetail();
@@ -42,6 +45,8 @@ export default function ApiDetail() {
             if (response.ok) {
                 const data = await response.json();
                 setApi(data);
+                setEditingBranch(data.branch || '');
+                setEditingToken(data.token || '');
             }
         } catch (error) {
             console.error('获取API详情失败:', error);
@@ -86,7 +91,6 @@ export default function ApiDetail() {
 
     const redeployApi = async () => {
         setActionLoading(true);
-        // console.log('Redeploying API with ID:', params.id);
         try {
             const response = await fetch(`/api/apis/${params.id}/redeploy`, {
                 method: 'POST',
@@ -104,6 +108,72 @@ export default function ApiDetail() {
         } finally {
             setActionLoading(false);
         }
+    };
+
+    const updateBranch = async () => {
+        if (!editingBranch.trim()) {
+            alert('分支名称不能为空');
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            const response = await fetch(`/api/apis/${params.id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ branch: editingBranch }),
+            });
+
+            if (response.ok) {
+                const updatedApi = await response.json();
+                setApi(updatedApi);
+                setIsEditingBranch(false);
+                alert('分支已更新');
+            } else {
+                const data = await response.json();
+                alert(data.error || '更新失败');
+            }
+        } catch (error) {
+            alert('网络错误，请重试');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const updateToken = async () => {
+        if (!editingToken.trim()) {
+            alert('Token不能为空');
+            return;
+        }
+
+        setActionLoading(true);
+        try {
+            const response = await fetch(`/api/apis/${params.id}`, {
+                method: 'PATCH',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ token: editingToken }),
+            });
+
+            if (response.ok) {
+                const updatedApi = await response.json();
+                setApi(updatedApi);
+                setIsEditingToken(false);
+                alert('Token已更新');
+            } else {
+                const data = await response.json();
+                alert(data.error || '更新失败');
+            }
+        } catch (error) {
+            alert('网络错误，请重试');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const generateNewToken = () => {
+        // 生成一个随机的token
+        const newToken = 'sk-' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+        setEditingToken(newToken);
     };
 
     const getStatusColor = (status) => {
@@ -169,7 +239,6 @@ export default function ApiDetail() {
                         <button
                             onClick={redeployApi}
                             disabled={actionLoading || api.status !== 'RUNNING'}
-                            // disabled={actionLoading || api.status !== 'RUNNING'}
                             className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700 disabled:opacity-50"
                         >
                             {actionLoading ? '部署中...' : '重新部署'}
@@ -279,11 +348,97 @@ export default function ApiDetail() {
                                     {api.gitUrl}
                                 </a>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">最近部署ID</span>
-                                <span className="font-medium text-sm">
-                  {api.lastJobId || '无记录'}
-                </span>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">分支</span>
+                                <div className="flex items-center space-x-2">
+                                    {isEditingBranch ? (
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={editingBranch}
+                                                onChange={(e) => setEditingBranch(e.target.value)}
+                                                className="border border-gray-300 rounded px-2 py-1 text-sm w-32"
+                                            />
+                                            <button
+                                                onClick={updateBranch}
+                                                disabled={actionLoading}
+                                                className="text-green-600 hover:text-green-800 text-sm"
+                                            >
+                                                ✓
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setIsEditingBranch(false);
+                                                    setEditingBranch(api.branch);
+                                                }}
+                                                className="text-red-600 hover:text-red-800 text-sm"
+                                            >
+                                                ✗
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="font-medium">{api.branch}</span>
+                                            <button
+                                                onClick={() => setIsEditingBranch(true)}
+                                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                            >
+                                                <i className="fas fa-edit"></i>
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-gray-600">Token</span>
+                                <div className="flex items-center space-x-2">
+                                    {isEditingToken ? (
+                                        <>
+                                            <input
+                                                type="text"
+                                                value={editingToken}
+                                                onChange={(e) => setEditingToken(e.target.value)}
+                                                className="border border-gray-300 rounded px-2 py-1 text-sm w-48"
+                                                placeholder="输入Token"
+                                            />
+                                            <button
+                                                onClick={generateNewToken}
+                                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                                title="生成新Token"
+                                            >
+                                                <i className="fas fa-sync-alt"></i>
+                                            </button>
+                                            <button
+                                                onClick={updateToken}
+                                                disabled={actionLoading}
+                                                className="text-green-600 hover:text-green-800 text-sm"
+                                            >
+                                                ✓
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setIsEditingToken(false);
+                                                    setEditingToken(api.token);
+                                                }}
+                                                className="text-red-600 hover:text-red-800 text-sm"
+                                            >
+                                                ✗
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="font-medium text-sm">
+                                                {api.token ? `${api.token.substring(0, 10)}...` : '未设置'}
+                                            </span>
+                                            <button
+                                                onClick={() => setIsEditingToken(true)}
+                                                className="text-blue-600 hover:text-blue-800 text-sm"
+                                            >
+                                                <i className="fas fa-edit"></i>
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -298,6 +453,11 @@ export default function ApiDetail() {
                             <div className="mb-1">
                                 <span className="text-blue-400">curl</span> -X GET <span className="text-yellow-400">https://{api.domain}/</span>
                             </div>
+                            {api.token && (
+                                <div className="mb-1">
+                                    <span className="text-blue-400">curl</span> -H <span className="text-purple-400">"Authorization: Bearer {api.token}"</span> <span className="text-yellow-400">https://{api.domain}/</span>
+                                </div>
+                            )}
                             <div className="mb-2">
                                 <span className="text-green-400"># 或者直接在浏览器中访问</span>
                             </div>
@@ -357,6 +517,7 @@ export default function ApiDetail() {
                     <h2 className="text-lg font-medium text-gray-900 mb-4">API设置</h2>
                     <div className="space-y-6">
 
+                        {/* 环境变量设置 */}
                         <div>
                             <h3 className="text-md font-medium text-gray-700 mb-2">环境变量</h3>
                             <div className="bg-gray-50 p-4 rounded space-y-2">
@@ -424,14 +585,14 @@ export default function ApiDetail() {
                                     </button>
                                 </div>
 
-                                {/* 保存按钮 */}
+                                {/* 保存环境变量按钮 */}
                                 <div className="mt-4">
                                     <button
                                         onClick={async () => {
                                             setActionLoading(true);
                                             try {
                                                 const response = await fetch(`/api/apis/${params.id}`, {
-                                                    method: 'PATCH', // 或 PUT，根据你后端接口
+                                                    method: 'PATCH',
                                                     headers: {'Content-Type': 'application/json'},
                                                     body: JSON.stringify({envs: api.envs}),
                                                 });
@@ -456,30 +617,7 @@ export default function ApiDetail() {
                             </div>
                         </div>
 
-
-                        {/*<div>*/}
-                        {/*    <h3 className="text-md font-medium text-gray-700 mb-2">环境变量</h3>*/}
-                        {/*    <div className="bg-gray-50 p-4 rounded space-y-2">*/}
-                        {/*        {api.envs && Object.keys(api.envs).length > 0 ? (*/}
-                        {/*            Object.entries(api.envs).map(([key, value]) => (*/}
-                        {/*                <div key={key}*/}
-                        {/*                     className="bg-white p-2 rounded shadow-sm text-sm font-mono text-gray-700 mb-1">*/}
-                        {/*                    {key}: {String(value)}*/}
-                        {/*                </div>*/}
-
-                        {/*            ))*/}
-                        {/*        ) : (*/}
-                        {/*            <p className="text-sm text-gray-600">暂无环境变量</p>*/}
-                        {/*        )}*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-
-                        {/*<div>*/}
-                        {/*    <h3 className="text-md font-medium text-gray-700 mb-2">自定义域名</h3>*/}
-                        {/*    <div className="bg-gray-50 p-4 rounded">*/}
-                        {/*        <p className="text-sm text-gray-600">自定义域名功能即将推出...</p>*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
+                        {/* 危险操作 */}
                         <div>
                             <h3 className="text-md font-medium text-gray-700 mb-2">危险操作</h3>
                             <div className="bg-red-50 p-4 rounded border border-red-200">
