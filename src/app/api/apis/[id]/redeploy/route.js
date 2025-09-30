@@ -34,7 +34,7 @@ export async function POST(request, { params }) {
             where: { id: id },
             data: {
                 status: 'BUILDING',
-                lastJobId: `job-${Date.now()}`,
+                // lastJobId: `job-${Date.now()}`,
                 updatedAt: new Date()
             }
         });
