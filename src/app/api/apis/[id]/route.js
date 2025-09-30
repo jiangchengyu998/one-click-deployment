@@ -97,7 +97,7 @@ export async function PATCH(request, { params }) {
         }
 
         const { id } = await params;
-        const { envs } = await request.json();
+        const { envs,gitToken,branch } = await request.json();
 
         // console.log('Received envs update for API:', id, envs);
 
@@ -118,7 +118,9 @@ export async function PATCH(request, { params }) {
         const updatedApi = await prisma.api.update({
             where: { id: id },
             data: {
-                envs: envs || {},
+                envs: envs !== undefined ? envs : api.envs,
+                gitToken: gitToken !== undefined ? gitToken : api.gitToken,
+                branch: branch !== undefined ? branch : api.branch,
                 updatedAt: new Date()
             }
         });

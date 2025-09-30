@@ -46,7 +46,7 @@ export default function ApiDetail() {
                 const data = await response.json();
                 setApi(data);
                 setEditingBranch(data.branch || '');
-                setEditingToken(data.token || '');
+                setEditingToken(data.gitToken || '');
             }
         } catch (error) {
             console.error('获取API详情失败:', error);
@@ -151,7 +151,7 @@ export default function ApiDetail() {
             const response = await fetch(`/api/apis/${params.id}`, {
                 method: 'PATCH',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ token: editingToken }),
+                body: JSON.stringify({ gitToken: editingToken }),
             });
 
             if (response.ok) {
@@ -418,7 +418,7 @@ export default function ApiDetail() {
                                             <button
                                                 onClick={() => {
                                                     setIsEditingToken(false);
-                                                    setEditingToken(api.token);
+                                                    setEditingToken(api.gitToken);
                                                 }}
                                                 className="text-red-600 hover:text-red-800 text-sm"
                                             >
@@ -428,7 +428,7 @@ export default function ApiDetail() {
                                     ) : (
                                         <>
                                             <span className="font-medium text-sm">
-                                                {api.token ? `${api.token.substring(0, 10)}...` : '未设置'}
+                                                {api.gitToken ? `${api.gitToken.substring(0, 10)}...` : '未设置'}
                                             </span>
                                             <button
                                                 onClick={() => setIsEditingToken(true)}
@@ -453,9 +453,9 @@ export default function ApiDetail() {
                             <div className="mb-1">
                                 <span className="text-blue-400">curl</span> -X GET <span className="text-yellow-400">https://{api.domain}/</span>
                             </div>
-                            {api.token && (
+                            {api.gitToken && (
                                 <div className="mb-1">
-                                    <span className="text-blue-400">curl</span> -H <span className="text-purple-400">"Authorization: Bearer {api.token}"</span> <span className="text-yellow-400">https://{api.domain}/</span>
+                                    <span className="text-blue-400">curl</span> -H <span className="text-purple-400">"Authorization: Bearer {api.gitToken}"</span> <span className="text-yellow-400">https://{api.domain}/</span>
                                 </div>
                             )}
                             <div className="mb-2">
