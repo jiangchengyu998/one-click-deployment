@@ -193,6 +193,12 @@ export async function POST(request) {
             throw new Error('调用Jenkins部署服务失败');
         }
 
+        // 更新api状态为BUILDING
+        await prisma.api.update({
+            where: { id: api.id },
+            data: { status: 'BUILDING' }
+        });
+
         return NextResponse.json(api, { status: 201 });
     } catch (error) {
         console.error('创建API错误:', error);
