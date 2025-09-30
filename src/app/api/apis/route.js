@@ -170,6 +170,7 @@ export async function POST(request) {
             exe_node: apiInfor.execNode,
             branch: api.branch,
             api_id: api.id,
+            gitToken: api.gitToken || '',
             // Switch to stringify for envs
             envs: JSON.stringify(api.envs)
         }).toString();
