@@ -3,6 +3,7 @@ import { hashPassword } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { sendVerificationEmail } from '@/lib/email';
 import { v4 as uuidv4 } from 'uuid';
+import {generateUserCode} from "@/lib/utils";
 
 export async function POST(request) {
     try {
@@ -30,13 +31,28 @@ export async function POST(request) {
         // 生成验证令牌
         const verificationToken = uuidv4();
 
+        // 生成用户代码
+        let code;
+        let isUnique = false;
+        let attempts = 0;
+
+        // 尝试生成唯一代码（最多尝试10次）
+        while (!isUnique && attempts < 10) {
+            code = generateUserCode();
+            const existingCode = await prisma.user.findUnique({
+                where: { code }
+            });
+            isUnique = !existingCode;
+            attempts++;
+        }
+
         // 创建用户（未验证状态）
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: await hashPassword(password),
-                code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                code: code,
                 verificationToken,
                 isVerified: false,
             },

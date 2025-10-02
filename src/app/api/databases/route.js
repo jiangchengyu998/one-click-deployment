@@ -115,7 +115,7 @@ export async function POST(request) {
         if (response.status === 201 || response.status === 200) {
             console.log('调用Jenkins创建数据库用户成功');
         } else {
-            console.error('调用Jenkins创建数据库用户失败:', response.status, response.statusText);
+            console.error('调用Jenkins创建数据库用户失败:', response.status, response);
         }
 
         // 我想让上一条pipeline执行完毕后再执行下一条，所以加了个延时10秒
@@ -141,7 +141,7 @@ export async function POST(request) {
             if (response_user.status === 201 || response_user.status === 200) {
                 console.log('调用Jenkins创建数据库成功');
             } else {
-                console.error('调用Jenkins创建数据库失败:', response_user.status, response_user.statusText);
+                console.error('调用Jenkins创建数据库失败:', response_user.status, response_user);
             }
 
         }, 7000);

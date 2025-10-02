@@ -113,7 +113,7 @@ export async function POST(request) {
         // 1. 调用http://192.168.101.51:8080/job/add_rr/ pipeline 创建dns记录
         // 构建参数字符串
         const query = new URLSearchParams({
-            RR: api.name+'-'+user.code,
+            rr: api.name+'-'+user.code,
             exe_node: apiInfor.execNode
         }).toString();
 
