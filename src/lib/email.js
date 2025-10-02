@@ -39,7 +39,7 @@ export async function sendVerificationEmail(email, verificationToken, name) {
         <p>如果您没有注册云朵平台账户，请忽略此邮件。</p>
         <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
         <p style="color: #6b7280; font-size: 14px;">
-          云朵平台团队
+          云朵平台
         </p>
       </div>
     `,
