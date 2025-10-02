@@ -1,4 +1,3 @@
-// src/app/api/auth/login/route.js
 import { NextResponse } from 'next/server';
 import { verifyPassword, generateToken } from '@/lib/auth';
 import { prisma } from '@/lib/db';
@@ -22,6 +21,14 @@ export async function POST(request) {
         if (!user) {
             return NextResponse.json(
                 { error: '用户不存在' },
+                { status: 401 }
+            );
+        }
+
+        // 检查用户是否已验证邮箱
+        if (!user.isVerified) {
+            return NextResponse.json(
+                { error: '请先验证您的邮箱地址' },
                 { status: 401 }
             );
         }

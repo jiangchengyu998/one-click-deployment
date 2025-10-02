@@ -1,41 +1,23 @@
-// src/app/api/auth/register/route.js
 import { NextResponse } from 'next/server';
 import { hashPassword } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import { generateUserCode } from '@/lib/utils';
+import { sendVerificationEmail } from '@/lib/email';
+import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request) {
     try {
         const { name, email, password } = await request.json();
 
-        // 验证必填字段
         if (!name || !email || !password) {
             return NextResponse.json(
-                { error: '所有字段都是必填的' },
+                { error: '姓名、邮箱和密码不能为空' },
                 { status: 400 }
             );
         }
 
-        // 检查邮箱格式
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-            return NextResponse.json(
-                { error: '邮箱格式不正确' },
-                { status: 400 }
-            );
-        }
-
-        // 检查密码长度
-        if (password.length < 6) {
-            return NextResponse.json(
-                { error: '密码至少需要6位字符' },
-                { status: 400 }
-            );
-        }
-
-        // 检查用户是否已存在
+        // 检查邮箱是否已存在
         const existingUser = await prisma.user.findUnique({
-            where: { email }
+            where: { email },
         });
 
         if (existingUser) {
@@ -45,45 +27,43 @@ export async function POST(request) {
             );
         }
 
-        // 生成用户代码
-        let code;
-        let isUnique = false;
-        let attempts = 0;
+        // 生成验证令牌
+        const verificationToken = uuidv4();
 
-        // 尝试生成唯一代码（最多尝试10次）
-        while (!isUnique && attempts < 10) {
-            code = generateUserCode();
-            const existingCode = await prisma.user.findUnique({
-                where: { code }
-            });
-            isUnique = !existingCode;
-            attempts++;
-        }
+        // 创建用户（未验证状态）
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: await hashPassword(password),
+                code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+                verificationToken,
+                isVerified: false,
+            },
+        });
 
-        if (!isUnique) {
+        // 发送验证邮件
+        try {
+            await sendVerificationEmail(email, verificationToken, name);
+        } catch (emailError) {
+            console.error('发送验证邮件失败:', emailError);
+            // 如果邮件发送失败，删除用户记录
+            await prisma.user.delete({ where: { id: user.id } });
             return NextResponse.json(
-                { error: '生成用户代码失败，请重试' },
+                { error: '邮件发送失败，请稍后重试' },
                 { status: 500 }
             );
         }
 
-        // 加密密码
-        const hashedPassword = await hashPassword(password);
-
-        // 创建用户
-        const user = await prisma.user.create({
-            data: {
-                code,
-                name,
-                email,
-                password: hashedPassword,
-                apiQuota: 2, // 默认API配额
-                dbQuota: 2,  // 默认数据库配额
-            },
-        });
-
         return NextResponse.json(
-            { message: '用户注册成功' },
+            {
+                message: '注册成功，请检查您的邮箱以完成验证',
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                }
+            },
             { status: 201 }
         );
     } catch (error) {

@@ -19,18 +19,20 @@ model Admin {
 }
 
 model User {
-  id        String     @id @default(cuid())
-  code      String     @unique
-  name      String
-  email     String     @unique
-  avatar    String?
-  password  String
-  apiQuota  Int        @default(2)
-  dbQuota   Int        @default(1)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  apis      Api[]
-  databases Database[]
+  id                String   @id @default(cuid())
+  code              String   @unique
+  name              String
+  email             String   @unique
+  avatar            String?
+  password          String
+  apiQuota          Int      @default(2)
+  dbQuota           Int      @default(1)
+  isVerified        Boolean  @default(false)
+  verificationToken String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  apis              Api[]
+  databases         Database[]
 
   @@map("users")
 }

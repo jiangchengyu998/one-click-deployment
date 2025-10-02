@@ -57,8 +57,11 @@ export default function Register() {
             const data = await response.json();
 
             if (response.ok) {
-                // 注册成功，跳转到登录页并显示成功消息
-                router.push('/auth/login?message=注册成功，请登录');
+                // 注册成功，显示提示信息
+                setError(''); // 清空错误
+                alert('注册成功！请检查您的邮箱并点击验证链接完成注册。');
+                // 可以跳转到登录页或显示成功信息
+                router.push('/auth/login?message=注册成功，请检查邮箱完成验证');
             } else {
                 setError(data.error || '注册失败');
             }
