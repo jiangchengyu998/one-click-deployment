@@ -56,6 +56,12 @@ export async function POST(request, { params }) {
 
         }, 30*60*1000);
 
+        // 检查用户配额
+        const user = await prisma.user.findUnique({
+            where: { id: session.id },
+            include: { _count: { select: { apis: true } } }
+        });
+
         // 读取环境变量
         const pipelineUrl = process.env.JENKINS_URL;
         const jenkinsUser = process.env.JENKINS_USER;
@@ -75,7 +81,8 @@ export async function POST(request, { params }) {
             api_id: api.id,
             gitToken: api.gitToken || '',
             // Switch to stringify for envs
-            envs: JSON.stringify(api.envs)
+            envs: JSON.stringify(api.envs),
+            api_name: user.code + '-' + api.name,
         }).toString();
 
         const response = await fetch(

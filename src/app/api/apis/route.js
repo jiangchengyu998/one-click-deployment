@@ -172,7 +172,8 @@ export async function POST(request) {
             api_id: api.id,
             gitToken: api.gitToken || '',
             // Switch to stringify for envs
-            envs: JSON.stringify(api.envs)
+            envs: JSON.stringify(api.envs),
+            api_name: user.code + '-' + api.name,
         }).toString();
 
         const responseDeployApi = await fetch(
