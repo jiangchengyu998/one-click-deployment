@@ -259,7 +259,8 @@ export default function AdminApis() {
                                 >
                                     <i className="fas fa-file-alt"></i>
                                 </button>
-                                {api.status === 'RUNNING' && (
+                                {/*{api.status === 'RUNNING' && (*/}
+                                { (
                                     <button
                                         onClick={() => redeployApi(api.id)}
                                         disabled={actionLoading}

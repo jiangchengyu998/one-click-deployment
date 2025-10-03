@@ -141,9 +141,9 @@ export default function AdminUsers() {
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                     <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
-                      <span className="text-white font-medium">
-                        {user.name.charAt(0).toUpperCase()}
-                      </span>
+                                      <span className="text-white font-medium">
+                                        {user.name.charAt(0).toUpperCase()}
+                                      </span>
                                     </div>
                                     <div className="ml-4">
                                         <div className="text-sm font-medium text-gray-900">{user.name}</div>
@@ -166,8 +166,8 @@ export default function AdminUsers() {
                                         className="cursor-pointer hover:text-blue-600"
                                         onClick={() => setEditingUser(user.id)}
                                     >
-                      {user.apiQuota}
-                    </span>
+                                      {user.apiQuota}
+                                    </span>
                                 )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -184,8 +184,8 @@ export default function AdminUsers() {
                                         className="cursor-pointer hover:text-blue-600"
                                         onClick={() => setEditingUser(user.id)}
                                     >
-                      {user.dbQuota}
-                    </span>
+                                      {user.dbQuota}
+                                    </span>
                                 )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
