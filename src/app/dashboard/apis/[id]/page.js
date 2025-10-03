@@ -20,13 +20,31 @@ export default function ApiDetail() {
     const [isEditingBranch, setIsEditingBranch] = useState(false);
     const [editingToken, setEditingToken] = useState('');
     const [isEditingToken, setIsEditingToken] = useState(false);
+    const [runLogs, setRunLogs] = useState([]);
+
 
     useEffect(() => {
         fetchApiDetail();
         if (activeTab === 'logs') {
             fetchApiLogs();
         }
+        if (activeTab === 'runlogs') {
+            fetchRunLogs();
+        }
     }, [params.id, activeTab]);
+
+    const fetchRunLogs = async () => {
+        try {
+            const response = await fetch(`/api/apis/${params.id}/runlogs`);
+            if (response.ok) {
+                const data = await response.json();
+                setRunLogs(data.logs || []);
+            }
+        } catch (error) {
+            console.error('获取运行日志失败:', error);
+        }
+    };
+
 
     const fetchApiDetail = async () => {
         try {
@@ -278,6 +296,17 @@ export default function ApiDetail() {
                         <i className="fas fa-file-alt mr-2"></i>部署日志
                     </button>
                     <button
+                        onClick={() => setActiveTab('runlogs')}
+                        className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
+                            activeTab === 'runlogs'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        }`}
+                    >
+                        <i className="fas fa-terminal mr-2"></i>运行日志
+                    </button>
+
+                    <button
                         onClick={() => setActiveTab('settings')}
                         className={`py-4 px-6 text-center border-b-2 font-medium text-sm ${
                             activeTab === 'settings'
@@ -510,6 +539,38 @@ export default function ApiDetail() {
                     </div>
                 </div>
             )}
+
+            {activeTab === 'runlogs' && (
+                <div className="bg-white shadow rounded-lg p-6 flex flex-col h-full">
+                    <h2 className="text-lg font-medium text-gray-900 mb-4">运行日志</h2>
+                    <div className="bg-gray-900 text-gray-100 p-4 rounded font-mono text-sm h-[calc(100vh-255px)] overflow-y-auto">
+                        {runLogs.length > 0 ? (
+                            runLogs.map((log, index) => (
+                                <div key={index} className="mb-1">
+                                    <span className="text-gray-200">{log}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-gray-400">暂无运行日志</div>
+                        )}
+                    </div>
+                    <div className="mt-4 flex justify-between">
+                        <button
+                            onClick={fetchRunLogs}
+                            className="text-blue-600 hover:text-blue-800"
+                        >
+                            <i className="fas fa-sync-alt mr-1"></i>刷新日志
+                        </button>
+                        <button
+                            onClick={() => setRunLogs([])}
+                            className="text-gray-600 hover:text-gray-800"
+                        >
+                            <i className="fas fa-trash mr-1"></i>清空日志
+                        </button>
+                    </div>
+                </div>
+            )}
+
 
             {/* 设置标签页 */}
             {activeTab === 'settings' && (
