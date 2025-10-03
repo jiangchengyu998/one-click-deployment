@@ -9,6 +9,8 @@ export default function AdminUsers() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState(null);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [showUserDetail, setShowUserDetail] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -44,6 +46,10 @@ export default function AdminUsers() {
             if (response.ok) {
                 fetchUsers(); // 刷新列表
                 setEditingUser(null);
+                // 如果正在查看该用户的详情，也更新详情数据
+                if (selectedUser && selectedUser.id === userId) {
+                    setSelectedUser(prev => ({ ...prev, ...updates }));
+                }
             } else {
                 alert('更新失败');
             }
@@ -62,11 +68,36 @@ export default function AdminUsers() {
 
             if (response.ok) {
                 fetchUsers();
+                // 如果正在查看被删除的用户，关闭详情弹窗
+                if (selectedUser && selectedUser.id === userId) {
+                    setShowUserDetail(false);
+                    setSelectedUser(null);
+                }
             } else {
                 alert('删除失败');
             }
         } catch (error) {
             alert('网络错误，请重试');
+        }
+    };
+
+    const viewUserDetail = async (user) => {
+        try {
+            // 可以在这里获取更详细的用户信息
+            const response = await fetch(`/api/admin/users/${user.id}`);
+            if (response.ok) {
+                const userDetail = await response.json();
+                setSelectedUser(userDetail);
+            } else {
+                setSelectedUser(user); // 降级使用基础信息
+            }
+
+            // setSelectedUser(user);
+            setShowUserDetail(true);
+        } catch (error) {
+            console.error('获取用户详情失败:', error);
+            setSelectedUser(user); // 降级使用基础信息
+            setShowUserDetail(true);
         }
     };
 
@@ -140,13 +171,19 @@ export default function AdminUsers() {
                         <tr key={user.id} className="hover:bg-gray-50">
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center cursor-pointer"
+                                         onClick={() => viewUserDetail(user)}>
                                       <span className="text-white font-medium">
                                         {user.name.charAt(0).toUpperCase()}
                                       </span>
                                     </div>
                                     <div className="ml-4">
-                                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                                        <div
+                                            className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
+                                            onClick={() => viewUserDetail(user)}
+                                        >
+                                            {user.name}
+                                        </div>
                                         <div className="text-sm text-gray-500">{user.email}</div>
                                         <div className="text-xs text-gray-400">代码: {user.code}</div>
                                     </div>
@@ -191,7 +228,13 @@ export default function AdminUsers() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {new Date(user.createdAt).toLocaleDateString('zh-CN')}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                                <button
+                                    onClick={() => viewUserDetail(user)}
+                                    className="text-blue-600 hover:text-blue-900"
+                                >
+                                    <i className="fas fa-eye mr-1"></i>查看
+                                </button>
                                 <button
                                     onClick={() => deleteUser(user.id)}
                                     className="text-red-600 hover:text-red-900"
@@ -241,6 +284,138 @@ export default function AdminUsers() {
                     </div>
                 </div>
             </div>
+
+            {/* 用户详情弹窗 */}
+            {showUserDetail && selectedUser && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                        <div className="p-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold text-gray-900">用户详情</h2>
+                                <button
+                                    onClick={() => setShowUserDetail(false)}
+                                    className="text-gray-400 hover:text-gray-600"
+                                >
+                                    <i className="fas fa-times text-xl"></i>
+                                </button>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* 基本信息 */}
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-4">基本信息</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">姓名</label>
+                                            <p className="mt-1 text-sm text-gray-900">{selectedUser.name}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">邮箱</label>
+                                            <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">用户代码</label>
+                                            <p className="mt-1 text-sm text-gray-900">{selectedUser.code}</p>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">注册时间</label>
+                                            <p className="mt-1 text-sm text-gray-900">
+                                                {new Date(selectedUser.createdAt).toLocaleString('zh-CN')}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 配额信息 */}
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-4">配额信息</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">API调用配额</label>
+                                            <div className="mt-1 flex items-center space-x-2">
+                                                {editingUser === selectedUser.id ? (
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        defaultValue={selectedUser.apiQuota}
+                                                        onBlur={(e) => updateUserQuota(selectedUser.id, { apiQuota: parseInt(e.target.value) })}
+                                                        className="w-24 border rounded px-2 py-1"
+                                                        autoFocus
+                                                    />
+                                                ) : (
+                                                    <>
+                                                        <span className="text-sm text-gray-900">{selectedUser.apiQuota}</span>
+                                                        <button
+                                                            onClick={() => setEditingUser(selectedUser.id)}
+                                                            className="text-blue-600 hover:text-blue-900 text-sm"
+                                                        >
+                                                            <i className="fas fa-edit mr-1"></i>编辑
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="text-sm font-medium text-gray-500">数据库配额</label>
+                                            <div className="mt-1 flex items-center space-x-2">
+                                                {editingUser === selectedUser.id ? (
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        defaultValue={selectedUser.dbQuota}
+                                                        onBlur={(e) => updateUserQuota(selectedUser.id, { dbQuota: parseInt(e.target.value) })}
+                                                        className="w-24 border rounded px-2 py-1"
+                                                    />
+                                                ) : (
+                                                    <>
+                                                        <span className="text-sm text-gray-900">{selectedUser.dbQuota}</span>
+                                                        <button
+                                                            onClick={() => setEditingUser(selectedUser.id)}
+                                                            className="text-blue-600 hover:text-blue-900 text-sm"
+                                                        >
+                                                            <i className="fas fa-edit mr-1"></i>编辑
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 使用统计（可根据需要扩展） */}
+                                <div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-4">使用统计</h3>
+                                    <div className="bg-gray-50 rounded-lg p-4">
+                                        <p className="text-sm text-gray-500 text-center">
+                                            使用统计功能开发中...
+                                        </p>
+                                        {/* 这里可以添加API调用次数、数据库使用量等统计信息 */}
+                                    </div>
+                                </div>
+
+                                {/* 操作按钮 */}
+                                <div className="flex justify-end space-x-3 pt-4 border-t">
+                                    <button
+                                        onClick={() => setShowUserDetail(false)}
+                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                                    >
+                                        关闭
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowUserDetail(false);
+                                            deleteUser(selectedUser.id);
+                                        }}
+                                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                                    >
+                                        <i className="fas fa-trash mr-1"></i>删除用户
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

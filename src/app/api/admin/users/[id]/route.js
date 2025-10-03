@@ -24,6 +24,9 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: '用户不存在' }, { status: 404 });
         }
 
+        //通过api获取ApiInfor 的信息
+
+
         return NextResponse.json(user);
     } catch (error) {
         console.error('获取用户详情错误:', error);
