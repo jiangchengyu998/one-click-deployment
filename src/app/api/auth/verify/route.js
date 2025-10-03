@@ -7,7 +7,7 @@ export async function GET(request) {
         const token = searchParams.get('token');
 
         if (!token) {
-            return NextResponse.redirect(new URL('/auth/login?error=无效的验证令牌', request.url));
+            return NextResponse.redirect(new URL('/auth/login?error=无效的验证令牌', process.env.NEXTAUTH_URL));
         }
 
         // 查找未验证的用户
@@ -19,7 +19,7 @@ export async function GET(request) {
         });
 
         if (!user) {
-            return NextResponse.redirect(new URL('/auth/login?error=验证链接无效或已过期', request.url));
+            return NextResponse.redirect(new URL('/auth/login?error=验证链接无效或已过期', process.env.NEXTAUTH_URL));
         }
 
         // 更新用户验证状态
@@ -31,9 +31,9 @@ export async function GET(request) {
             },
         });
 
-        return NextResponse.redirect(new URL('/auth/login?message=邮箱验证成功，请登录', request.url));
+        return NextResponse.redirect(new URL('/auth/login?message=邮箱验证成功，请登录', process.env.NEXTAUTH_URL));
     } catch (error) {
         console.error('邮箱验证错误:', error);
-        return NextResponse.redirect(new URL('/auth/login?error=验证失败，请重试', request.url));
+        return NextResponse.redirect(new URL('/auth/login?error=验证失败，请重试', process.env.NEXTAUTH_URL));
     }
 }
