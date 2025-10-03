@@ -11,6 +11,7 @@ export default function AdminUsers() {
     const [editingUser, setEditingUser] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
     const [showUserDetail, setShowUserDetail] = useState(false);
+    const [userDetailLoading, setUserDetailLoading] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
@@ -82,23 +83,59 @@ export default function AdminUsers() {
     };
 
     const viewUserDetail = async (user) => {
+        setUserDetailLoading(true);
         try {
-            // 可以在这里获取更详细的用户信息
+            // 获取完整的用户详情，包括API和数据库信息
             const response = await fetch(`/api/admin/users/${user.id}`);
             if (response.ok) {
                 const userDetail = await response.json();
                 setSelectedUser(userDetail);
             } else {
-                setSelectedUser(user); // 降级使用基础信息
+                // 如果详情接口不可用，使用基础信息
+                setSelectedUser(user);
             }
-
-            // setSelectedUser(user);
             setShowUserDetail(true);
         } catch (error) {
             console.error('获取用户详情失败:', error);
             setSelectedUser(user); // 降级使用基础信息
             setShowUserDetail(true);
+        } finally {
+            setUserDetailLoading(false);
         }
+    };
+
+    // 获取API状态统计
+    const getApiStatusStats = (apis) => {
+        const stats = {
+            RUNNING: 0,
+            PENDING: 0,
+            FAILED: 0,
+            STOPPED: 0,
+            total: apis.length
+        };
+        apis.forEach(api => {
+            if (stats[api.status] !== undefined) {
+                stats[api.status]++;
+            }
+        });
+        return stats;
+    };
+
+    // 获取数据库状态统计
+    const getDbStatusStats = (databases) => {
+        const stats = {
+            RUNNING: 0,
+            CREATING: 0,
+            FAILED: 0,
+            STOPPED: 0,
+            total: databases.length
+        };
+        databases.forEach(db => {
+            if (stats[db.status] !== undefined) {
+                stats[db.status]++;
+            }
+        });
+        return stats;
     };
 
     const filteredUsers = users.filter(user =>
@@ -286,9 +323,9 @@ export default function AdminUsers() {
             </div>
 
             {/* 用户详情弹窗 */}
-            {showUserDetail && selectedUser && (
+            {showUserDetail && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
                         <div className="p-6">
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-bold text-gray-900">用户详情</h2>
@@ -300,118 +337,301 @@ export default function AdminUsers() {
                                 </button>
                             </div>
 
-                            <div className="space-y-6">
-                                {/* 基本信息 */}
-                                <div>
-                                    <h3 className="text-lg font-medium text-gray-900 mb-4">基本信息</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500">姓名</label>
-                                            <p className="mt-1 text-sm text-gray-900">{selectedUser.name}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500">邮箱</label>
-                                            <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500">用户代码</label>
-                                            <p className="mt-1 text-sm text-gray-900">{selectedUser.code}</p>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500">注册时间</label>
-                                            <p className="mt-1 text-sm text-gray-900">
-                                                {new Date(selectedUser.createdAt).toLocaleString('zh-CN')}
-                                            </p>
-                                        </div>
-                                    </div>
+                            {userDetailLoading ? (
+                                <div className="flex justify-center items-center py-12">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
                                 </div>
-
-                                {/* 配额信息 */}
-                                <div>
-                                    <h3 className="text-lg font-medium text-gray-900 mb-4">配额信息</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500">API调用配额</label>
-                                            <div className="mt-1 flex items-center space-x-2">
-                                                {editingUser === selectedUser.id ? (
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        defaultValue={selectedUser.apiQuota}
-                                                        onBlur={(e) => updateUserQuota(selectedUser.id, { apiQuota: parseInt(e.target.value) })}
-                                                        className="w-24 border rounded px-2 py-1"
-                                                        autoFocus
-                                                    />
-                                                ) : (
-                                                    <>
-                                                        <span className="text-sm text-gray-900">{selectedUser.apiQuota}</span>
-                                                        <button
-                                                            onClick={() => setEditingUser(selectedUser.id)}
-                                                            className="text-blue-600 hover:text-blue-900 text-sm"
-                                                        >
-                                                            <i className="fas fa-edit mr-1"></i>编辑
-                                                        </button>
-                                                    </>
-                                                )}
+                            ) : selectedUser ? (
+                                <div className="space-y-6">
+                                    {/* 基本信息 */}
+                                    <div>
+                                        <h3 className="text-lg font-medium text-gray-900 mb-4">基本信息</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500">姓名</label>
+                                                <p className="mt-1 text-sm text-gray-900">{selectedUser.name}</p>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <label className="text-sm font-medium text-gray-500">数据库配额</label>
-                                            <div className="mt-1 flex items-center space-x-2">
-                                                {editingUser === selectedUser.id ? (
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        defaultValue={selectedUser.dbQuota}
-                                                        onBlur={(e) => updateUserQuota(selectedUser.id, { dbQuota: parseInt(e.target.value) })}
-                                                        className="w-24 border rounded px-2 py-1"
-                                                    />
-                                                ) : (
-                                                    <>
-                                                        <span className="text-sm text-gray-900">{selectedUser.dbQuota}</span>
-                                                        <button
-                                                            onClick={() => setEditingUser(selectedUser.id)}
-                                                            className="text-blue-600 hover:text-blue-900 text-sm"
-                                                        >
-                                                            <i className="fas fa-edit mr-1"></i>编辑
-                                                        </button>
-                                                    </>
-                                                )}
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500">邮箱</label>
+                                                <p className="mt-1 text-sm text-gray-900">{selectedUser.email}</p>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500">用户代码</label>
+                                                <p className="mt-1 text-sm text-gray-900">{selectedUser.code}</p>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500">注册时间</label>
+                                                <p className="mt-1 text-sm text-gray-900">
+                                                    {new Date(selectedUser.createdAt).toLocaleString('zh-CN')}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500">邮箱验证状态</label>
+                                                <p className="mt-1 text-sm">
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${selectedUser.isVerified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                                                        {selectedUser.isVerified ? '已验证' : '未验证'}
+                                                    </span>
+                                                </p>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                {/* 使用统计（可根据需要扩展） */}
-                                <div>
-                                    <h3 className="text-lg font-medium text-gray-900 mb-4">使用统计</h3>
-                                    <div className="bg-gray-50 rounded-lg p-4">
-                                        <p className="text-sm text-gray-500 text-center">
-                                            使用统计功能开发中...
-                                        </p>
-                                        {/* 这里可以添加API调用次数、数据库使用量等统计信息 */}
+                                    {/* 配额信息 */}
+                                    <div>
+                                        <h3 className="text-lg font-medium text-gray-900 mb-4">配额信息</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500">API调用配额</label>
+                                                <div className="mt-1 flex items-center space-x-2">
+                                                    {editingUser === selectedUser.id ? (
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            defaultValue={selectedUser.apiQuota}
+                                                            onBlur={(e) => updateUserQuota(selectedUser.id, { apiQuota: parseInt(e.target.value) })}
+                                                            className="w-24 border rounded px-2 py-1"
+                                                            autoFocus
+                                                        />
+                                                    ) : (
+                                                        <>
+                                                            <span className="text-sm text-gray-900">
+                                                                {selectedUser.apiQuota} (已使用: {selectedUser.apis?.length || 0})
+                                                            </span>
+                                                            <button
+                                                                onClick={() => setEditingUser(selectedUser.id)}
+                                                                className="text-blue-600 hover:text-blue-900 text-sm"
+                                                            >
+                                                                <i className="fas fa-edit mr-1"></i>编辑
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-500">数据库配额</label>
+                                                <div className="mt-1 flex items-center space-x-2">
+                                                    {editingUser === selectedUser.id ? (
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            defaultValue={selectedUser.dbQuota}
+                                                            onBlur={(e) => updateUserQuota(selectedUser.id, { dbQuota: parseInt(e.target.value) })}
+                                                            className="w-24 border rounded px-2 py-1"
+                                                        />
+                                                    ) : (
+                                                        <>
+                                                            <span className="text-sm text-gray-900">
+                                                                {selectedUser.dbQuota} (已使用: {selectedUser.databases?.length || 0})
+                                                            </span>
+                                                            <button
+                                                                onClick={() => setEditingUser(selectedUser.id)}
+                                                                className="text-blue-600 hover:text-blue-900 text-sm"
+                                                            >
+                                                                <i className="fas fa-edit mr-1"></i>编辑
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* 使用统计 */}
+                                    <div>
+                                        <h3 className="text-lg font-medium text-gray-900 mb-4">使用统计</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                            {/* API 统计 */}
+                                            <div className="bg-blue-50 rounded-lg p-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="text-sm font-medium text-blue-800">API 服务</h4>
+                                                    <span className="text-lg font-bold text-blue-600">
+                                                        {selectedUser.apis?.length || 0}
+                                                    </span>
+                                                </div>
+                                                {selectedUser.apis && (
+                                                    <div className="space-y-1 text-xs text-blue-700">
+                                                        {(() => {
+                                                            const stats = getApiStatusStats(selectedUser.apis);
+                                                            return (
+                                                                <>
+                                                                    <div className="flex justify-between">
+                                                                        <span>运行中</span>
+                                                                        <span className="font-medium">{stats.RUNNING}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between">
+                                                                        <span>部署中</span>
+                                                                        <span className="font-medium">{stats.PENDING}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between">
+                                                                        <span>已停止</span>
+                                                                        <span className="font-medium">{stats.STOPPED}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between">
+                                                                        <span>失败</span>
+                                                                        <span className="font-medium">{stats.FAILED}</span>
+                                                                    </div>
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* 数据库统计 */}
+                                            <div className="bg-green-50 rounded-lg p-4">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <h4 className="text-sm font-medium text-green-800">数据库</h4>
+                                                    <span className="text-lg font-bold text-green-600">
+                                                        {selectedUser.databases?.length || 0}
+                                                    </span>
+                                                </div>
+                                                {selectedUser.databases && (
+                                                    <div className="space-y-1 text-xs text-green-700">
+                                                        {(() => {
+                                                            const stats = getDbStatusStats(selectedUser.databases);
+                                                            return (
+                                                                <>
+                                                                    <div className="flex justify-between">
+                                                                        <span>运行中</span>
+                                                                        <span className="font-medium">{stats.RUNNING}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between">
+                                                                        <span>创建中</span>
+                                                                        <span className="font-medium">{stats.CREATING}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between">
+                                                                        <span>已停止</span>
+                                                                        <span className="font-medium">{stats.STOPPED}</span>
+                                                                    </div>
+                                                                    <div className="flex justify-between">
+                                                                        <span>失败</span>
+                                                                        <span className="font-medium">{stats.FAILED}</span>
+                                                                    </div>
+                                                                </>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* API 服务列表 */}
+                                    {selectedUser.apis && selectedUser.apis.length > 0 && (
+                                        <div>
+                                            <h3 className="text-lg font-medium text-gray-900 mb-4">API 服务列表</h3>
+                                            <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                                                <div className="space-y-3">
+                                                    {selectedUser.apis.map((api) => (
+                                                        <div key={api.id} className="bg-white rounded-lg p-3 border">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div>
+                                                                    <h4 className="font-medium text-gray-900">{api.name}</h4>
+                                                                    <p className="text-sm text-gray-500">{api.domain}</p>
+                                                                </div>
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                    api.status === 'RUNNING' ? 'bg-green-100 text-green-800' :
+                                                                        api.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                                                            api.status === 'FAILED' ? 'bg-red-100 text-red-800' :
+                                                                                'bg-gray-100 text-gray-800'
+                                                                }`}>
+                                                                    {api.status === 'RUNNING' ? '运行中' :
+                                                                        api.status === 'PENDING' ? '部署中' :
+                                                                            api.status === 'FAILED' ? '失败' : '已停止'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                                                <div>
+                                                                    <span className="font-medium">Git:</span> {api.gitUrl}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-medium">分支:</span> {api.branch || 'main'}
+                                                                </div>
+                                                                {api.serverIp && (
+                                                                    <div>
+                                                                        <span className="font-medium">服务器:</span> {api.serverIp}:{api.serverPort}
+                                                                    </div>
+                                                                )}
+                                                                {api.execNode && (
+                                                                    <div>
+                                                                        <span className="font-medium">执行节点:</span> {api.execNode}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="mt-2 text-xs text-gray-500">
+                                                                创建时间: {new Date(api.createdAt).toLocaleString('zh-CN')}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 数据库列表 */}
+                                    {selectedUser.databases && selectedUser.databases.length > 0 && (
+                                        <div>
+                                            <h3 className="text-lg font-medium text-gray-900 mb-4">数据库列表</h3>
+                                            <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
+                                                <div className="space-y-3">
+                                                    {selectedUser.databases.map((db) => (
+                                                        <div key={db.id} className="bg-white rounded-lg p-3 border">
+                                                            <div className="flex justify-between items-start mb-2">
+                                                                <div>
+                                                                    <h4 className="font-medium text-gray-900">{db.name}</h4>
+                                                                    <p className="text-sm text-gray-500">用户: {db.username}</p>
+                                                                </div>
+                                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                                                    db.status === 'RUNNING' ? 'bg-green-100 text-green-800' :
+                                                                        db.status === 'CREATING' ? 'bg-yellow-100 text-yellow-800' :
+                                                                            db.status === 'FAILED' ? 'bg-red-100 text-red-800' :
+                                                                                'bg-gray-100 text-gray-800'
+                                                                }`}>
+                                                                    {db.status === 'RUNNING' ? '运行中' :
+                                                                        db.status === 'CREATING' ? '创建中' :
+                                                                            db.status === 'FAILED' ? '失败' : '已停止'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                                                                <div>
+                                                                    <span className="font-medium">主机:</span> {db.host}
+                                                                </div>
+                                                                <div>
+                                                                    <span className="font-medium">创建时间:</span> {new Date(db.createdAt).toLocaleString('zh-CN')}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* 操作按钮 */}
+                                    <div className="flex justify-end space-x-3 pt-4 border-t">
+                                        <button
+                                            onClick={() => setShowUserDetail(false)}
+                                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                                        >
+                                            关闭
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowUserDetail(false);
+                                                deleteUser(selectedUser.id);
+                                            }}
+                                            className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                                        >
+                                            <i className="fas fa-trash mr-1"></i>删除用户
+                                        </button>
                                     </div>
                                 </div>
-
-                                {/* 操作按钮 */}
-                                <div className="flex justify-end space-x-3 pt-4 border-t">
-                                    <button
-                                        onClick={() => setShowUserDetail(false)}
-                                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                                    >
-                                        关闭
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setShowUserDetail(false);
-                                            deleteUser(selectedUser.id);
-                                        }}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
-                                    >
-                                        <i className="fas fa-trash mr-1"></i>删除用户
-                                    </button>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <i className="fas fa-exclamation-triangle text-gray-300 text-4xl mb-3"></i>
+                                    <p className="text-gray-500">无法加载用户详情</p>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
                 </div>
