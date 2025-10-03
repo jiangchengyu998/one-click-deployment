@@ -12,8 +12,10 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
+        const { id } = await params;
+
         const user = await prisma.user.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: {
                 apis: true,
                 databases: true
@@ -24,8 +26,22 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: '用户不存在' }, { status: 404 });
         }
 
-        //通过api获取ApiInfor 的信息
+        //通过apiid获取ApiInfor 的信息
 
+        const apiIds = user.apis.map(api => api.id);
+
+        const apiInfor = await prisma.apiInfor.findMany({
+            where: {
+                apiId: {
+                    in: apiIds
+                }
+            }
+        });
+
+        user.apis = user.apis.map(api => ({
+            ...api,
+            ...apiInfor.find(infor => infor.apiId === api.id)
+        }));
 
         return NextResponse.json(user);
     } catch (error) {
