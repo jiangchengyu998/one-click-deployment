@@ -322,7 +322,7 @@ export default function UserApis() {
                                             className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
                                             placeholder="my-api"
                                         />
-                                        <p className="text-xs text-gray-500 mt-1">将用于生成域名: {newApi.name || 'my-api'}-您的代码.ydphoto.com</p>
+                                        <p className="text-xs text-gray-500 mt-1">将用于生成域名: {newApi.name || 'my-api'}-您的代码.${process.env.MAIN_DOMAIN}</p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">Git仓库地址</label>
