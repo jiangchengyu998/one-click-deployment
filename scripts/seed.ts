@@ -6,7 +6,7 @@ const prisma = new PrismaClient()
 
 async function main() {
     // 创建默认管理员
-    const adminPassword = await hashPassword('admin123')
+    const adminPassword = await hashPassword('admin')
     await prisma.admin.upsert({
         where: { username: 'admin' },
         update: {},

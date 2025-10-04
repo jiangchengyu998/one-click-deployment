@@ -54,7 +54,7 @@ export async function POST(request) {
         }
 
         // 生成域名
-        const domain = `${name}-${user.code}.ydphoto.com`;
+        const domain = `${name}-${user.code}.${process.env.MAIN_DOMAIN}`;
 
         // 创建API记录
         const api = await prisma.api.create({
