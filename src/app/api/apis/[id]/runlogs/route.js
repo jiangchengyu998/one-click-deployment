@@ -19,7 +19,7 @@ export async function GET(request, { params }) {
         const apiName = api.name + "-" + user.code;
         console.log(apiName);
 
-        const response = await fetch(`http://192.168.101.51:8081/logs/${apiName}.log`);
+        const response = await fetch(`${process.env.SMTP_USER}/logs/${apiName}.log`);
         if (!response.ok) {
             return res.status(response.status).json({ error: '获取运行日志失败' });
         }
