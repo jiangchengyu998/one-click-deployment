@@ -19,9 +19,9 @@ export async function GET(request, { params }) {
         const apiName = api.name + "-" + user.code;
         console.log(apiName);
 
-        const response = await fetch(`http://192.168.101.51:8081/logs/${apiName}.log`);
+        const response = await fetch(`${process.env.RSYSLOG_URL}/logs/${apiName}.log`);
         if (!response.ok) {
-            return res.status(response.status).json({ error: '获取运行日志失败' });
+            return Response.json({ error: "获取运行日志失败" }, { status: response.status });
         }
 
         const text = await response.text();
@@ -31,6 +31,6 @@ export async function GET(request, { params }) {
         return Response.json({ logs }); // ✅ App Router 的写法
     } catch (error) {
         console.error(error);
-        return Response.json({ error: "内部错误" }, { status: 500 }); // ✅
+        return Response.json({ error: "内部错误" }, { status: 500 });
     }
 }

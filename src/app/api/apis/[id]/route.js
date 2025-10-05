@@ -24,7 +24,8 @@ export async function GET(request, { params }) {
                         email: true,
                         code: true
                     }
-                }
+                },
+                api_infor: true
             }
         });
 
@@ -72,6 +73,11 @@ export async function DELETE(request, { params }) {
             return NextResponse.json({ error: '无权删除此API' }, { status: 403 });
         }
 
+        const user = await prisma.user.findUnique({
+            where: { id: api.userId }
+        });
+
+
         // 删除API
         await prisma.api.delete({
             where: { id: id }
@@ -85,8 +91,8 @@ export async function DELETE(request, { params }) {
         // 1. 调用http://192.168.101.51:8080/job/delete_api/ pipeline 删除API相关资源
         // 构建参数字符串
         const query = new URLSearchParams({
-            api_name: api.name,
-            RR: api.name
+            api_name: api.name + '-' + user.code,
+            RR: api.name + '-' + user.code,
         }).toString();
 
         const response = await fetch(
