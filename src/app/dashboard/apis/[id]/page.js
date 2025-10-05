@@ -500,6 +500,22 @@ export default function ApiDetail() {
                                     https://{api.domain}
                                 </a>
                             </div>
+
+                            {
+                                process.env.NEXT_PUBLIC_MODE !== 'saas' && (
+                                    <div>
+                                        <a
+                                            href={`http://${api.api_infor[0].serverIp}:${api.api_infor[0].serverPort}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-yellow-400 hover:underline"
+                                        >
+                                            http://{api.api_infor[0].serverIp}:{api.api_infor[0].serverPort}
+                                        </a>
+                                    </div>
+                                )
+                            }
+
                         </div>
                     </div>
                 </div>
@@ -509,7 +525,8 @@ export default function ApiDetail() {
             {activeTab === 'logs' && (
                 <div className="bg-white shadow rounded-lg p-6 flex flex-col h-full">
                     <h2 className="text-lg font-medium text-gray-900 mb-4">部署日志</h2>
-                    <div className="bg-gray-900 text-gray-100 p-4 rounded font-mono text-sm h-[calc(100vh-255px)] overflow-y-auto">
+                    <div
+                        className="bg-gray-900 text-gray-100 p-4 rounded font-mono text-sm h-[calc(100vh-255px)] overflow-y-auto">
                         {logs.length > 0 ? (
                             logs.map((log, index) => (
                                 <div key={index} className="mb-1">
