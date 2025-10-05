@@ -83,6 +83,7 @@ export async function POST(request, { params }) {
             // Switch to stringify for envs
             envs: JSON.stringify(api.envs),
             api_name: api.name + '-' +  user.code,
+            CALL_BACK_HOST: process.env.NEXTAUTH_URL || '',
         }).toString();
 
         const response = await fetch(
