@@ -52,7 +52,7 @@ export async function POST(request) {
         }
 
         // 生成域名
-        const domain = `${name}-${user.code}.${process.env.MAIN_DOMAIN}`;
+        const domain = `${name}-${user.code}.${process.env.NEXT_PUBLIC_MAIN_DOMAIN}`;
 
         // 根据name 和userId 查看api,如果有了，就不可以创建
         const existingApi = await prisma.api.findFirst({

@@ -66,7 +66,7 @@ export async function POST(request) {
         // const hashedApiPassword = await hashPassword(apiPassword);
 
         // 生成数据库主机地址（在实际应用中，这里应该调用数据库创建服务）
-        const host = `${process.env.MAIN_DOMAIN}`;
+        const host = `${process.env.NEXT_PUBLIC_MAIN_DOMAIN}`;
 
         // 创建数据库记录
         const database = await prisma.database.create({

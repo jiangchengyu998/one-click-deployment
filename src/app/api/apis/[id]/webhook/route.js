@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import {sendDeployInfoEmail} from "@/lib/email";
 
 // 重新部署API
 export async function POST(request, { params }) {
@@ -29,6 +30,20 @@ export async function POST(request, { params }) {
                 updatedAt: new Date()
             }
         });
+
+        const user = await prisma.user.findUnique({
+            where: { id: api.userId }
+        });
+
+        // 用户不存在，直接返回
+        if (!user) {
+            return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+        }
+
+
+
+        // 发送邮件给用户，通知api 状态 email, status, apiName,apiId
+        await sendDeployInfoEmail(user.email, apiStatus, api.name, api.id);
 
         return NextResponse.json({ message: 'API状态更新成功' });
     } catch (error) {
