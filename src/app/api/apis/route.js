@@ -52,7 +52,22 @@ export async function POST(request) {
         }
 
         // 生成域名
-        const domain = `${name}-${user.code}.${process.env.MAIN_DOMAIN}`;
+        const domain = `${name}-${user.code}.${process.env.NEXT_PUBLIC_MAIN_DOMAIN}`;
+
+        // 根据name 和userId 查看api,如果有了，就不可以创建
+        const existingApi = await prisma.api.findFirst({
+            where: {
+                name,
+                userId: session.id,
+            }
+        });
+
+        if (existingApi) {
+            return NextResponse.json(
+                { error: '已存在相同名称的API' },
+                { status: 400 }
+            );
+        }
 
         // 创建API记录
         const api = await prisma.api.create({
@@ -72,6 +87,12 @@ export async function POST(request) {
             const currentApi = await prisma.api.findUnique({
                 where: { id: api.id }
             });
+
+            // 如果currentApi不存在，则直接返回
+            if (!currentApi) {
+                console.log('API记录不存在，ID:', api.id);
+                return;
+            }
 
             if (currentApi.status === 'BUILDING') {
                 console.log('API部署超时，自动设置为ERROR状态，API ID:', currentApi.id);
@@ -124,6 +145,7 @@ export async function POST(request) {
             // Switch to stringify for envs
             envs: JSON.stringify(api.envs),
             api_name: api.name + '-' +  user.code,
+            CALL_BACK_HOST: process.env.NEXTAUTH_URL || '',
         }).toString();
 
         const responseDeployApi = await fetch(
