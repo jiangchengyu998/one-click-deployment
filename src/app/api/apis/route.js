@@ -54,6 +54,21 @@ export async function POST(request) {
         // 生成域名
         const domain = `${name}-${user.code}.${process.env.MAIN_DOMAIN}`;
 
+        // 根据name 和userId 查看api,如果有了，就不可以创建
+        const existingApi = await prisma.api.findFirst({
+            where: {
+                name,
+                userId: session.id,
+            }
+        });
+
+        if (existingApi) {
+            return NextResponse.json(
+                { error: '已存在相同名称的API' },
+                { status: 400 }
+            );
+        }
+
         // 创建API记录
         const api = await prisma.api.create({
             data: {
