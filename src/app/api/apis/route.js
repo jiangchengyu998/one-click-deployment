@@ -88,6 +88,12 @@ export async function POST(request) {
                 where: { id: api.id }
             });
 
+            // 如果currentApi不存在，则直接返回
+            if (!currentApi) {
+                console.log('API记录不存在，ID:', api.id);
+                return;
+            }
+
             if (currentApi.status === 'BUILDING') {
                 console.log('API部署超时，自动设置为ERROR状态，API ID:', currentApi.id);
                 await prisma.api.update({
