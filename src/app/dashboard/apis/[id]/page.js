@@ -480,11 +480,13 @@ export default function ApiDetail() {
                                 <span className="text-green-400"># 测试您的API端点</span>
                             </div>
                             <div className="mb-1">
-                                <span className="text-blue-400">curl</span> -X GET <span className="text-yellow-400">https://{api.domain}/</span>
+                                <span className="text-blue-400">curl</span> -X GET <span
+                                className="text-yellow-400">https://{api.domain}/</span>
                             </div>
                             {api.gitToken && (
                                 <div className="mb-1">
-                                    <span className="text-blue-400">curl</span> -H <span className="text-purple-400">"Authorization: Bearer {api.gitToken}"</span> <span className="text-yellow-400">https://{api.domain}/</span>
+                                    <span className="text-blue-400">curl</span> -H <span className="text-purple-400">"Authorization: Bearer {api.gitToken}"</span>
+                                    <span className="text-yellow-400">https://{api.domain}/</span>
                                 </div>
                             )}
                             <div className="mb-2">
@@ -500,7 +502,11 @@ export default function ApiDetail() {
                                     https://{api.domain}
                                 </a>
                             </div>
-
+                            <div>
+                                环境变量值: {process.env.NEXT_PUBLIC_MODE}
+                                类型: {typeof process.env.NEXT_PUBLIC_MODE}
+                                是否等于'saas': {process.env.NEXT_PUBLIC_MODE === 'saas' ? '是' : '否'}
+                            </div>
                             {
                                 process.env.NEXT_PUBLIC_MODE !== 'saas' && (
                                     <div>
