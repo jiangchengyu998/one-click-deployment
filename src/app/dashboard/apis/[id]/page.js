@@ -502,11 +502,6 @@ export default function ApiDetail() {
                                     https://{api.domain}
                                 </a>
                             </div>
-                            <div>
-                                环境变量值: {process.env.NEXT_PUBLIC_MODE}
-                                类型: {typeof process.env.NEXT_PUBLIC_MODE}
-                                是否等于'saas': {process.env.NEXT_PUBLIC_MODE === 'saas' ? '是' : '否'}
-                            </div>
                             {
                                 process.env.NEXT_PUBLIC_MODE !== 'saas' && (
                                     <div>
