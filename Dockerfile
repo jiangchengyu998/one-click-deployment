@@ -1,6 +1,9 @@
 # 使用一个已包含 corepack 的 Node.js 官方镜像
 FROM node:18-alpine AS base
 
+# 声明构建参数
+ARG SERVER_PORT
+
 # 阶段 1: 安装依赖
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
