@@ -50,5 +50,7 @@ USER nextjs
 EXPOSE 3003
 ENV PORT 3003
 ENV HOSTNAME "0.0.0.0"
+ENV NEXT_PUBLIC_MAIN_DOMAIN="xxxxx.xxx"
+ENV NEXT_PUBLIC_MODE=opensource
 
 CMD ["node", "server.js"]
