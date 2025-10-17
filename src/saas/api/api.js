@@ -7,7 +7,7 @@ export async function createDnsRecord(api, user, apiInfor) {
     return true;
 }
 
-export async function createNginxConfig(api, apiInfor) {
+export async function createNginxConfig(api, apiInfor, user) {
     // 添加nginx等配置
     console.log('添加nginx等配置');
     console.log(api.name);
