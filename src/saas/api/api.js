@@ -43,7 +43,7 @@ export async function createNginxConfig(api, apiInfor) {
     // 构建参数字符串
     const queryAddNginx = new URLSearchParams({
         api_name: api.name+'-'+user.code,
-        api_port: nextPort,
+        api_port: apiInfor.serverPort,
         server_ip: apiInfor.serverIp,
         // exe_node: apiInfor.execNode
         exe_node: "aliyun"
