@@ -43,7 +43,7 @@
 
 - 已注册阿里云账号，购买ECS实例，购买域名并备案
 - 已安装 Docker
-- 已安装 Jenkins
+- 已安装 Jenkins ==> [Jenkins 安装配置指南](https://github.com/jiangchengyu998/jenkins-pipeline-shared/blob/master/README.md)
 - 已安装 Node.js 和 npm
 - 已安装 MySQL 数据库
 
@@ -76,7 +76,8 @@
     SMTP_PASSWORD="你的163邮箱密码"
     SMTP_FROM="你的163邮箱账号"
     RSYSLOG_URL=http://localhost:8081
-    NEXT_PUBLIC_MAIN_DOMAIN="your.com"
+    # 你备案好的主域名, 请替换为你的实际值
+    NEXT_PUBLIC_MAIN_DOMAIN="yourdomain.com"
     NEXT_PUBLIC_MODE=opensource
     SERVER_IP=localhost
    ```
