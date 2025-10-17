@@ -1,7 +1,7 @@
 # ☁️ 云朵一键部署平台
 
 > 一款轻量、灵活的云端应用自动化部署平台，让开发者一键完成应用部署无需复杂的证书配置。  
-> 为用户的每一个应用（api）生成一个专有的三级域名，比如 [http://demo-hk.ydphoto.com](http://demo-hk.ydphoto.com)
+> 为用户的每一个应用（api）生成一个专有的三级域名，比如 [https://demo-hk.ydphoto.com](https://demo-hk.ydphoto.com)
 
 ---
 
@@ -18,7 +18,7 @@
 ## ✨ 功能特性
 
 - 🚀 **一键部署**：支持 Docker 一键部署
-- 🔑 **为每个应用生成专有三级域名**：如 demo-hk.ydphoto.com），自动配置 DNS
+- 🔑 **为每个应用生成专有三级域名**：如 [https://demo-hk.ydphoto.com](https://demo-hk.ydphoto.com)，自动配置 DNS
 - 🧩 **可扩展模板系统**：自定义Dockerfile与环境变量
 - 🔧 **持续集成支持**：与 Jenkins 无缝集成
 - 📊 **实时日志与部署日志**
