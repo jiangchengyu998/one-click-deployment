@@ -1,4 +1,4 @@
-# ☁️ 云朵一键部署平台[https://www.ydphoto.com](https://www.ydphoto.com)
+# ☁️ 云朵一键部署平台
 
 > 一款轻量、灵活的云端应用自动化部署平台，让开发者一键完成应用部署无需复杂的证书配置。  
 > 为用户的每一个应用（api）生成一个专有的三级域名，比如 [http://demo-hk.ydphoto.com](http://demo-hk.ydphoto.com)
@@ -7,7 +7,7 @@
 
 ## 🧭 项目简介
 
-**云朵一键部署平台（Yunduo Deploy Platform）** 致力于简化云端部署流程。  
+**云朵一键部署平台（[https://www.ydphoto.com](https://www.ydphoto.com)）** 致力于简化云端部署流程。  
 它基于阿里云，集成容器化自动部署、自动配置三级域名、日志查看和状态监控等核心功能，让部署像点一下按钮一样简单。
 
 ![dashboard.png](docs/dashboard.png)
