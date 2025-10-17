@@ -45,7 +45,8 @@ export async function createNginxConfig(api, apiInfor) {
         api_name: api.name+'-'+user.code,
         api_port: nextPort,
         server_ip: apiInfor.serverIp,
-        exe_node: apiInfor.execNode
+        // exe_node: apiInfor.execNode
+        exe_node: "aliyun"
     }).toString();
 
     const responseAddNginx = await fetch(
