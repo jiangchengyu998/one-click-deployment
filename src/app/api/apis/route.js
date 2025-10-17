@@ -129,7 +129,7 @@ export async function POST(request) {
 
         if (process.env.NEXT_PUBLIC_MODE === 'saas') {
             await createDnsRecord(api, user, apiInfor)
-            await createNginxConfig(api, apiInfor)
+            await createNginxConfig(api, apiInfor, user)
 
         }
 

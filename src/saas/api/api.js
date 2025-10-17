@@ -36,7 +36,7 @@ export async function createDnsRecord(api, user, apiInfor) {
     return true;
 }
 
-export async function createNginxConfig(api, apiInfor) {
+export async function createNginxConfig(api, apiInfor, user) {
     // 添加nginx等配置
     console.log('添加nginx等配置');
     // 2. 调用 http://192.168.101.51:8080/job/add_nginx_file/ pipeline 创建nginx配置文件
