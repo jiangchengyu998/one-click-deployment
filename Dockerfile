@@ -2,7 +2,7 @@
 FROM node:18-alpine AS base
 
 # 声明构建参数
-ARG SERVER_PORT
+ARG SERVER_PORT=3000
 
 # 阶段 1: 安装依赖
 FROM base AS deps
@@ -10,9 +10,7 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# 启用 corepack 并配置 pnpm
 RUN corepack enable
-# 在 package.json 中应指定 "packageManager": "pnpm@x.x.x"
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm fetch --prod
 
@@ -21,41 +19,36 @@ FROM base AS builder
 WORKDIR /app
 RUN corepack enable
 
-# 注入 build 时需要的 NEXT_PUBLIC_ 变量
 ENV NEXT_PUBLIC_MAIN_DOMAIN="xxxxx.xxx"
 ENV NEXT_PUBLIC_MODE="opensource"
 
-# 首先复制锁文件和包管理配置
 COPY package.json pnpm-lock.yaml ./
-# 从 deps 阶段复制已获取的依赖（存储在虚拟存储中）
 COPY --from=deps /app/node_modules ./node_modules
-# 然后复制源代码并构建
 COPY . .
-# 构建应用前生成 Prisma 客户端
+
 RUN pnpm install --frozen-lockfile
 RUN pnpx prisma generate
 RUN pnpm run build
 
-
 # 阶段 3: 准备运行环境
-FROM base AS runner
+FROM node:18-alpine AS runner
 WORKDIR /app
 RUN corepack enable
 
-# 以非 root 用户运行增强安全性
+# 再次声明 ARG，才能在此阶段使用
+ARG SERVER_PORT=3000
+ENV PORT=${SERVER_PORT}
+ENV HOSTNAME="0.0.0.0"
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# 复制构建产物和运行依赖
 COPY --from=builder /app/public ./public
-# 根据 Next.js 输出模式调整（standalone 或 standard）
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE ${SERVER_PORT}
-ENV PORT ${SERVER_PORT}
-ENV HOSTNAME "0.0.0.0"
+EXPOSE ${PORT}
 
 CMD ["node", "server.js"]
