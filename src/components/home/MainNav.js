@@ -28,7 +28,7 @@ export default function MainNav() {
                     <ul className="nav-links">
                         <li><Link href="/#features">功能</Link></li>
                         <li><Link href="/#workflow">使用流程</Link></li>
-                        <li><Link href="/#pricing">定价</Link></li>
+                        {/*<li><Link href="/#pricing">定价</Link></li>*/}
                         <li><Link href="/#docs">文档</Link></li>
                     </ul>
                     <div className="auth-buttons">
