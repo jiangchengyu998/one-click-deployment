@@ -2,28 +2,28 @@
 export default function Footer() {
     const footerLinks = {
         platform: [
-            { name: '关于我们', href: '#' },
-            { name: '博客', href: '#' },
-            { name: '职业机会', href: '#' },
-            { name: '联系我们', href: '#' }
+            { name: '关于我', href: '#' },
+            // { name: '博客', href: '#' },
+            // { name: '职业机会', href: '#' },
+            // { name: '联系我们', href: '#' }
         ],
         product: [
             { name: '功能', href: '#' },
-            { name: '定价', href: '#' },
-            { name: '文档', href: '#' },
-            { name: '状态', href: '#' }
+            // { name: '定价', href: '#' },
+            // { name: '文档', href: '#' },
+            // { name: '状态', href: '#' }
         ],
         support: [
             { name: '帮助中心', href: '#' },
-            { name: '社区论坛', href: '#' },
-            { name: 'API文档', href: '#' },
-            { name: '服务条款', href: '#' }
+            // { name: '社区论坛', href: '#' },
+            // { name: 'API文档', href: '#' },
+            // { name: '服务条款', href: '#' }
         ],
         social: [
-            { name: 'GitHub', href: '#', icon: 'fab fa-github' },
-            { name: 'Twitter', href: '#', icon: 'fab fa-twitter' },
-            { name: '微博', href: '#', icon: 'fab fa-weibo' },
-            { name: '知乎', href: '#', icon: 'fab fa-zhihu' }
+            { name: 'GitHub', href: 'https://github.com/jiangchengyu998/one-click-deployment', icon: 'fab fa-github' },
+            // { name: 'Twitter', href: '#', icon: 'fab fa-twitter' },
+            // { name: '微博', href: '#', icon: 'fab fa-weibo' },
+            // { name: '知乎', href: '#', icon: 'fab fa-zhihu' }
         ]
     }
 
@@ -59,13 +59,13 @@ export default function Footer() {
                         <h3>关注我们</h3>
                         <ul className="footer-links">
                             {footerLinks.social.map((link, index) => (
-                                <li key={index}><a href={link.href}><i className={link.icon}></i> {link.name}</a></li>
+                                <li key={index}><a href={link.href} target="_blank"><i className={link.icon}></i> {link.name}</a></li>
                             ))}
                         </ul>
                     </div>
                 </div>
                 <div className="copyright">
-                    <p>&copy; 2023 云朵一键部署平台. 保留所有权利.</p>
+                    <p>&copy; 2025 云朵一键部署平台. 保留所有权利.</p>
                 </div>
             </div>
             <style jsx>{`
