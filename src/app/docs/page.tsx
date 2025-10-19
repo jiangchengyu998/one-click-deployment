@@ -6,42 +6,26 @@ export default function Docs() {
             title: '快速开始',
             icon: 'fas fa-rocket',
             items: [
-                // { name: '平台介绍', href: '#', description: '了解云朵平台的核心功能' },
-                { name: '注册与登录', href: '#', description: '创建您的第一个账户' },
-                { name: '首次部署指南', href: '#', description: '完成您的第一次部署' }
+                { name: '注册与登录', href: '/docs/register-login', description: '创建您的第一个账户' },
+                { name: '首次部署指南', href: '/docs/first-deployment', description: '完成您的第一次部署' }
             ]
         },
         {
             title: '数据库管理',
             icon: 'fas fa-database',
             items: [
-                { name: '创建数据库实例', href: '#', description: '一键创建和管理数据库' },
-                { name: '数据库连接', href: '#', description: '获取连接信息和凭据' },
-                // { name: '数据管理', href: '#', description: '在线管理数据库表和数据' },
-                // { name: '备份与恢复', href: '#', description: '数据安全保障措施' }
+                { name: '创建数据库实例', href: '/docs/create-db-instance', description: '一键创建和管理数据库' },
+                { name: '数据库连接', href: '/docs/db-connection', description: '获取连接信息和凭据' },
             ]
         },
         {
             title: 'API部署',
             icon: 'fas fa-code',
             items: [
-                { name: '项目准备', href: '#', description: '配置您的项目以支持部署' },
-                // { name: 'GitHub集成', href: '#', description: '连接GitHub仓库自动部署' },
-                { name: '环境变量配置', href: '#', description: '安全地管理敏感配置' },
-                // { name: '自定义域名', href: '#', description: '绑定您自己的域名' },
-                { name: '日志查看', href: '#', description: '实时查看应用运行日志' }
+                { name: '部署项目', href: '/docs/deploy-project', description: '将您的项目部署到云朵平台' },
+                { name: 'Dockerfile配置', href: '/docs/dockerfile-configuration', description: '自定义构建配置' },
             ]
-        },
-        // {
-        //     title: '高级功能',
-        //     icon: 'fas fa-cogs',
-        //     items: [
-        //         { name: 'Dockerfile配置', href: '#', description: '自定义构建配置' },
-        //         { name: '环境隔离', href: '#', description: '开发、测试、生产环境' },
-        //         { name: '性能监控', href: '#', description: '监控应用性能和资源使用' },
-        //         { name: '自动伸缩', href: '#', description: '根据负载自动调整资源' }
-        //     ]
-        // }
+        }
     ];
 
     return (
