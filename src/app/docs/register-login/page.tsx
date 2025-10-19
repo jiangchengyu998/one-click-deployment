@@ -1,239 +1,293 @@
-// src/app/docs/register-login/page.tsx
 "use client";
+import {JSX, useEffect, useState} from "react";
+import Image from "next/image";
+import Link from "next/link";
+
+const steps = [
+    { id: "step1", title: "填写注册信息", number: 1 },
+    { id: "step2", title: "邮箱认证", number: 2 },
+    { id: "step3", title: "登录使用", number: 3 },
+];
+
 export default function RegisterLoginDocs() {
+    const [activeId, setActiveId] = useState<string>("step1");
+
+    useEffect(() => {
+        // 平滑滚动
+        document.documentElement.style.scrollBehavior = "smooth";
+
+        // Intersection Observer 监听滚动位置
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (entry.isIntersecting) {
+                        setActiveId(entry.target.id);
+                    }
+                }
+            },
+            { rootMargin: "-50% 0px -50% 0px", threshold: 0.1 }
+        );
+
+        steps.forEach((s) => {
+            const el = document.getElementById(s.id);
+            if (el) observer.observe(el);
+        });
+
+        return () => observer.disconnect();
+    }, []);
+
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
-            <div className="container mx-auto px-4 max-w-4xl">
-                {/* 页面头部 */}
-                <div className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-4">
-                        注册与登录指南
-                    </h1>
-                    <p className="text-xl text-gray-600">
-                        了解如何在云朵平台创建账户并开始使用我们的服务
-                    </p>
-                </div>
-
-                {/* 内容导航 */}
-                <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div className="min-h-screen bg-gray-50 py-10">
+            <div className="container mx-auto px-4 max-w-5xl flex flex-col md:flex-row gap-10">
+                {/* 侧边导航栏 */}
+                <aside className="md:w-64 bg-white rounded-lg shadow p-6 h-fit sticky top-20">
                     <h2 className="text-lg font-semibold text-gray-900 mb-4">内容导航</h2>
-                    <div className="flex flex-wrap gap-4">
-                        <a href="#step1" className="text-blue-600 hover:text-blue-800 font-medium">
-                            步骤一：填写注册信息
-                        </a>
-                        <a href="#step2" className="text-blue-600 hover:text-blue-800 font-medium">
-                            步骤二：邮箱认证
-                        </a>
-                        <a href="#step3" className="text-blue-600 hover:text-blue-800 font-medium">
-                            步骤三：登录使用
-                        </a>
-                    </div>
-                </div>
+                    <ul className="space-y-3">
+                        {steps.map((s) => (
+                            <li key={s.id}>
+                                <a
+                                    href={`#${s.id}`}
+                                    className={`block px-3 py-2 rounded-md font-medium transition-colors duration-150 ${
+                                        activeId === s.id
+                                            ? "bg-blue-100 text-blue-700"
+                                            : "text-blue-600 hover:bg-blue-50 hover:text-blue-800"
+                                    }`}
+                                >
+                                    步骤{s.number}：{s.title}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </aside>
 
-                {/* 步骤一：填写注册信息 */}
-                <section id="step1" className="bg-white rounded-lg shadow-sm p-8 mb-8">
-                    <div className="flex items-center mb-6">
-                        <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4">
-                            1
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900">填写注册信息</h2>
-                    </div>
-
-                    <div className="prose max-w-none">
-                        <p className="text-gray-700 mb-6">
-                            首先，点击首页右上角的<strong>"免费注册"</strong>按钮，进入注册页面。
+                {/* 主体内容 */}
+                <main className="flex-1">
+                    {/* 页面头部 */}
+                    <header className="text-center mb-12">
+                        <h1 className="text-4xl font-bold text-gray-900 mb-3">注册与登录指南</h1>
+                        <p className="text-lg text-gray-600">
+                            了解如何在云朵平台创建账户并开始使用我们的服务
                         </p>
+                    </header>
 
-                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-                            <p className="text-blue-800">
-                                💡 <strong>提示：</strong> 请确保使用真实有效的邮箱地址，以便接收认证邮件。
-                            </p>
-                        </div>
+                    {/* 步骤内容 */}
+                    {steps.map((s) => (
+                        <StepSection key={s.id} id={s.id} number={s.number} title={s.title} />
+                    ))}
 
-                        <h3 className="text-xl font-semibold text-gray-900 mb-4">需要填写的字段：</h3>
-                        <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
-                            <li><strong>邮箱地址</strong> - 用于登录和接收重要通知</li>
-                            <li><strong>用户名</strong> - 在平台中显示的名称</li>
-                            <li><strong>密码</strong> - 至少8位，包含字母和数字</li>
-                            <li><strong>确认密码</strong> - 再次输入密码进行确认</li>
-                        </ul>
+                    {/* 常见问题 */}
+                    <FAQSection />
 
-                        <img
-                            src="/images/register-form.png"
-                            alt="注册表单页面"
-                            className="rounded-lg shadow-md mb-6"
-                        />
+                    {/* 导航链接 */}
+                    <footer className="mt-12 flex justify-between">
+                        <Link
+                            href="/docs"
+                            className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                            <ArrowLeftIcon />
+                            返回文档中心
+                        </Link>
 
-                        <div className="bg-green-50 border-l-4 border-green-500 p-4">
-                            <p className="text-green-800">
-                                ✅ <strong>完成此步骤后：</strong> 系统会向您填写的邮箱发送一封认证邮件。
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                {/* 步骤二：邮箱认证 */}
-                <section id="step2" className="bg-white rounded-lg shadow-sm p-8 mb-8">
-                    <div className="flex items-center mb-6">
-                        <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4">
-                            2
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900">邮箱认证</h2>
-                    </div>
-
-                    <div className="prose max-w-none">
-                        <p className="text-gray-700 mb-6">
-                            提交注册申请后，请登录您填写的邮箱查收认证邮件。
-                        </p>
-
-                        <h3 className="text-xl font-semibold text-gray-900 mb-4">操作步骤：</h3>
-                        <ol className="list-decimal list-inside text-gray-700 mb-6 space-y-3">
-                            <li>打开您的邮箱客户端（如Gmail、QQ邮箱、163邮箱等）</li>
-                            <li>在收件箱中查找来自 <strong>noreply@yunduo.com</strong> 的邮件</li>
-                            <li>邮件主题通常为 <strong>"请验证您的云朵平台账户"</strong></li>
-                            <li>点击邮件中的 <strong>"验证邮箱"</strong> 或类似按钮/链接</li>
-                        </ol>
-
-                        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
-                            <p className="text-yellow-800">
-                                ⚠️ <strong>注意：</strong> 如果未收到邮件，请检查垃圾邮件文件夹，或等待几分钟后重试。
-                            </p>
-                        </div>
-
-                        <img
-                            src="/images/register-email.png"
-                            alt="注册邮箱认证页面"
-                            className="rounded-lg shadow-md mb-6"
-                        />
-
-
-                        <div className="bg-green-50 border-l-4 border-green-500 p-4">
-                            <p className="text-green-800">
-                                ✅ <strong>完成此步骤后：</strong> 您的账户已成功激活，可以登录使用平台服务。
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                {/* 步骤三：登录使用 */}
-                <section id="step3" className="bg-white rounded-lg shadow-sm p-8 mb-8">
-                    <div className="flex items-center mb-6">
-                    <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4">
-                            3
-                        </div>
-                        <h2 className="text-2xl font-bold text-gray-900">登录使用</h2>
-                    </div>
-
-                    <div className="prose max-w-none">
-                        <p className="text-gray-700 mb-6">
-                            邮箱认证完成后，返回云朵平台首页，点击"登录"按钮进入登录页面。
-                        </p>
-
-                        <h3 className="text-xl font-semibold text-gray-900 mb-4">登录方式：</h3>
-                        <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
-                            <li><strong>邮箱登录</strong> - 使用注册时填写的邮箱地址</li>
-                            <li><strong>密码登录</strong> - 输入您设置的密码</li>
-                        </ul>
-
-                        {/* 登录页面截图占位符 */}
-                        <img
-                            src="/images/login-form.png"
-                            alt="登录页面"
-                            className="rounded-lg shadow-md mb-6"
-                        />
-
-                        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-                            <p className="text-blue-800">
-                                🔐 <strong>安全提示：</strong> 请勿在公共设备上勾选"记住我"选项，以保护您的账户安全。
-                            </p>
-                        </div>
-
-                        <h3 className="text-xl font-semibold text-gray-900 mb-4">登录后：</h3>
-                        <p className="text-gray-700 mb-4">
-                            成功登录后，您将进入云朵平台的控制台页面，可以开始：
-                        </p>
-                        <ul className="list-disc list-inside text-gray-700 mb-6 space-y-2">
-                            <li>创建和管理数据库实例</li>
-                            <li>部署API应用</li>
-                            {/*<li>查看资源使用情况</li>*/}
-                            <li>管理项目设置</li>
-                        </ul>
-
-                        {/* 控制台页面截图占位符 */}
-                        {/*<div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-6">*/}
-                            <img
-                                src="/images/user-dashboad.png"
-                                alt="登录页面"
-                                className="rounded-lg shadow-md mb-6"
-                            />
-                        {/*    <p className="text-gray-500">用户控制台截图</p>*/}
-                        {/*    <p className="text-sm text-gray-400 mt-1">展示登录成功后的控制台界面</p>*/}
-                        {/*</div>*/}
-
-                        <div className="bg-green-50 border-l-4 border-green-500 p-4">
-                            <p className="text-green-800">
-                                🎉 <strong>恭喜！</strong> 您已成功完成注册和登录流程，现在可以开始使用云朵平台的所有功能了。
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                {/* 常见问题 */}
-                <section className="bg-white rounded-lg shadow-sm p-8">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">常见问题</h2>
-
-                    <div className="space-y-6">
-                        <div className="border-b border-gray-200 pb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                收不到认证邮件怎么办？
-                            </h3>
-                            <p className="text-gray-700">
-                                请检查垃圾邮件文件夹，或将 noreply@yunduo.com 添加到您的联系人列表。如果仍然收不到，可以尝试重新发送认证邮件或联系客服。
-                            </p>
-                        </div>
-
-                        <div className="border-b border-gray-200 pb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                忘记密码怎么办？
-                            </h3>
-                            <p className="text-gray-700">
-                                在登录页面点击"忘记密码"链接，输入您的邮箱地址，系统会发送密码重置邮件到您的邮箱。
-                            </p>
-                        </div>
-
-                        <div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                一个邮箱可以注册多个账户吗？
-                            </h3>
-                            <p className="text-gray-700">
-                                每个邮箱地址只能注册一个云朵平台账户。如果您需要多个账户，请使用不同的邮箱地址注册。
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
-                {/* 导航链接 */}
-                <div className="mt-12 flex justify-between">
-                    <a
-                        href="/docs"
-                        className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        返回文档中心
-                    </a>
-                    <a
-                        href="/docs/first-deployment"
-                        className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                        下一篇：首次部署指南
-                        <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </a>
-                </div>
+                        <Link
+                            href="/docs/first-deployment"
+                            className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                            下一篇：首次部署指南
+                            <ArrowRightIcon />
+                        </Link>
+                    </footer>
+                </main>
             </div>
         </div>
+    );
+}
+
+/* 单步内容组件 */
+function StepSection({
+                         id,
+                         number,
+                         title,
+                     }: {
+    id: string;
+    number: number;
+    title: string;
+}) {
+    const images: Record<string, string> = {
+        step1: "/images/register-form.png",
+        step2: "/images/register-email.png",
+        step3: "/images/login-form.png",
+    };
+
+    const contentMap: Record<string, JSX.Element> = {
+        step1: (
+            <>
+                <p className="mb-6">
+                    点击首页右上角的<strong>「免费注册」</strong>按钮进入注册页面。
+                </p>
+                <Alert type="info" text="请使用真实有效的邮箱地址，以便接收认证邮件。" />
+                <h3 className="text-xl font-semibold mt-6 mb-3">填写字段：</h3>
+                <ul className="list-disc list-inside space-y-2 mb-6">
+                    <li>邮箱地址 - 用于登录与通知</li>
+                    <li>用户名 - 显示在平台内的昵称</li>
+                    <li>密码 - 至少6位</li>
+                    <li>确认密码 - 再次输入以确认</li>
+                </ul>
+                <Image
+                    src={images[id]}
+                    alt="注册表单页面"
+                    width={900}
+                    height={500}
+                    className="rounded-lg shadow-md mb-6"
+                    loading="lazy"
+                />
+                <Alert type="success" text="系统会向您填写的邮箱发送认证邮件。" />
+            </>
+        ),
+        step2: (
+            <>
+                <p className="mb-6">提交注册后，请前往邮箱查收认证邮件。</p>
+                <ol className="list-decimal list-inside space-y-2 mb-6">
+                    <li>打开邮箱客户端（Gmail、QQ邮箱等）</li>
+                    <li>查找来自 <strong>jchengyu0829@163.com</strong> 的邮件</li>
+                    <li>点击邮件中的「验证邮箱地址」</li>
+                </ol>
+                <Alert
+                    type="warning"
+                    text="若未收到邮件，请检查垃圾邮件文件夹或稍后重试。"
+                />
+                <Image
+                    src={images[id]}
+                    alt="邮箱认证示例"
+                    width={900}
+                    height={500}
+                    className="rounded-lg shadow-md mb-6"
+                    loading="lazy"
+                />
+                <Alert type="success" text="邮箱验证成功后，账户即被激活。" />
+            </>
+        ),
+        step3: (
+            <>
+                <p className="mb-6">
+                    认证完成后，返回首页点击「登录」进入登录页面。
+                </p>
+                <ul className="list-disc list-inside space-y-2 mb-6">
+                    <li>邮箱登录 - 使用注册邮箱</li>
+                    <li>密码登录 - 输入密码</li>
+                </ul>
+                <Image
+                    src={images[id]}
+                    alt="登录页面"
+                    width={900}
+                    height={500}
+                    className="rounded-lg shadow-md mb-6"
+                    loading="lazy"
+                />
+                <Alert
+                    type="info"
+                    text="⚠️ 请勿在公共设备上勾选『记住我』，以保护账户安全。"
+                />
+                <ul className="list-disc list-inside space-y-2 mb-6">
+                    <li>创建与管理数据库实例</li>
+                    <li>部署 API 应用</li>
+                    <li>管理项目设置</li>
+                </ul>
+                <Image
+                    src="/images/user-dashboard.png"
+                    alt="控制台页面"
+                    width={900}
+                    height={500}
+                    className="rounded-lg shadow-md mb-6"
+                    loading="lazy"
+                />
+                <Alert type="success" text="🎉 恭喜，您已完成注册与登录流程！" />
+            </>
+        ),
+    };
+
+    return (
+        <section id={id} className="bg-white rounded-lg shadow p-8 mb-10 scroll-mt-24">
+            <div className="flex items-center mb-6">
+                <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-4">
+                    {number}
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+            </div>
+            <div className="text-gray-700 leading-relaxed">{contentMap[id]}</div>
+        </section>
+    );
+}
+
+/* FAQ */
+function FAQSection() {
+    const faqs = [
+        {
+            q: "收不到认证邮件怎么办？",
+            a: "请检查垃圾邮件文件夹，或将 jchengyu0829@163.com 添加到联系人列表。如果仍未收到，请尝试重新发送认证邮件或联系客服。",
+        },
+        {
+            q: "忘记密码怎么办？",
+            a: "在登录页面点击「忘记密码」链接，输入邮箱地址后，系统会发送重置邮件。",
+        },
+        {
+            q: "一个邮箱可以注册多个账户吗？",
+            a: "每个邮箱仅可注册一个账户。如需多个，请使用不同邮箱注册。",
+        },
+    ];
+
+    return (
+        <section className="bg-white rounded-lg shadow p-8">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">常见问题</h2>
+            <div className="divide-y divide-gray-200">
+                {faqs.map((f, i) => (
+                    <div key={i} className="py-6">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{f.q}</h3>
+                        <p className="text-gray-700">{f.a}</p>
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+/* 通用提示框 */
+function Alert({ type, text }: { type: "info" | "success" | "warning"; text: string }) {
+    const styles = {
+        info: "bg-blue-50 border-blue-500 text-blue-800",
+        success: "bg-green-50 border-green-500 text-green-800",
+        warning: "bg-yellow-50 border-yellow-500 text-yellow-800",
+    };
+    return (
+        <div className={`border-l-4 p-4 mb-6 ${styles[type]}`}>
+            <p>{text}</p>
+        </div>
+    );
+}
+
+/* 图标组件 */
+function ArrowLeftIcon() {
+    return (
+        <svg
+            className="w-5 h-5 mr-2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+        >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+    );
+}
+function ArrowRightIcon() {
+    return (
+        <svg
+            className="w-5 h-5 ml-2"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+        >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
     );
 }
