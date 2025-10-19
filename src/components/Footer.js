@@ -1,5 +1,17 @@
 "use client";
+import {usePathname} from "next/navigation";
+
 export default function Footer() {
+    const pathname = usePathname();
+
+    // 在这些路径下不显示页脚
+    const hideNavPaths = ['/admin', '/dashboard', '/auth'];
+    const shouldHideNav = hideNavPaths.some(path => pathname.startsWith(path));
+
+    if (shouldHideNav) {
+        return null;
+    }
+
     const footerLinks = {
         platform: [
             { name: '关于我', href: '#' },

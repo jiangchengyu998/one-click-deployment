@@ -2,6 +2,7 @@
 import { Inter } from 'next/font/google'
 import './globals.css'
 import MainNav from "@/components/home/MainNav";
+import Footer from "@/components/Footer";
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,6 +21,7 @@ export default function RootLayout({ children } : { children: React.ReactNode })
         {/* 只在非管理员/非控制台页面显示主导航 */}
         <MainNav />
         {children}
+        <Footer />
         </body>
         </html>
     )

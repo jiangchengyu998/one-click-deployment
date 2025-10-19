@@ -3,7 +3,7 @@ export default function Workflow() {
     const steps = [
         { number: '1', title: '注册账户', description: '创建您的云朵平台账户' },
         { number: '2', title: '创建数据库', description: '一键生成数据库实例和凭据' },
-        { number: '3', title: '部署API', description: '提供GitHub地址，选择部署配置' },
+        { number: '3', title: '部署API', description: '提供Git地址，填写部署配置' },
         { number: '4', title: '访问应用', description: '通过专属域名访问您的API' }
     ]
 

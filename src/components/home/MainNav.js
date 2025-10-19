@@ -28,8 +28,8 @@ export default function MainNav() {
                     <ul className="nav-links">
                         <li><Link href="/#features">功能</Link></li>
                         <li><Link href="/#workflow">使用流程</Link></li>
-                        {/*<li><Link href="/#pricing">定价</Link></li>*/}
-                        <li><Link href="/#docs">文档</Link></li>
+                        <li><Link href="/pricing">定价</Link></li> {/* 更新为实际页面 */}
+                        <li><Link href="/docs">文档</Link></li> {/* 更新为实际页面 */}
                     </ul>
                     <div className="auth-buttons">
                         <Link href="/auth/login" className="btn btn-outline">登录</Link>

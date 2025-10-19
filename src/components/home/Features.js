@@ -6,12 +6,12 @@ export default function Features() {
         {
             icon: 'fas fa-database',
             title: '数据库管理',
-            description: '一键创建数据库实例，自动生成数据库名称和账号密码。支持在线创建表、管理数据，无需复杂的数据库配置。'
+            description: '一键创建数据库实例，自动生成数据库名称和账号密码，无需复杂的数据库配置。'
         },
         {
             icon: 'fas fa-code',
             title: 'API部署',
-            description: '只需提供GitHub仓库地址，自动部署您的API应用。平台将为您分配专属三级域名，立即访问您的API服务。'
+            description: '只需提供Git仓库地址，自动部署您的API应用。平台将为您分配专属三级域名，立即访问您的API服务。'
         },
         {
             icon: 'fas fa-cogs',
