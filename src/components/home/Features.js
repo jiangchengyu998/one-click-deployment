@@ -6,17 +6,20 @@ export default function Features() {
         {
             icon: 'fas fa-database',
             title: '数据库管理',
-            description: '一键创建数据库实例，自动生成数据库名称和账号密码，无需复杂的数据库配置。'
+            description: '一键创建数据库实例，自动生成数据库名称和账号密码，无需复杂的数据库配置。',
+            href: '/docs/database-management',
         },
         {
             icon: 'fas fa-code',
             title: 'API部署',
-            description: '只需提供Git仓库地址，自动部署您的API应用。平台将为您分配专属三级域名，立即访问您的API服务。'
+            description: '只需提供Git仓库地址，自动部署您的API应用。平台将为您分配专属三级域名，立即访问您的API服务。',
+            href: '/docs/api-deployment',
         },
         {
             icon: 'fas fa-cogs',
             title: '灵活配置',
-            description: '为多种主流语言提供预置Dockerfile，同时也支持自定义Dockerfile，满足您的特殊部署需求。'
+            description: '为多种主流语言提供预置Dockerfile，同时也支持自定义Dockerfile，满足您的特殊部署需求。',
+            href: '/docs/dockerfile-configuration',
         }
     ]
 
@@ -35,7 +38,7 @@ export default function Features() {
                             </div>
                             <h3>{feature.title}</h3>
                             <p>{feature.description}</p>
-                            <Link href="/#features" className="btn btn-outline">了解更多</Link>
+                            <Link href={feature.href} className="btn btn-outline">了解更多</Link>
                         </div>
                     ))}
                 </div>

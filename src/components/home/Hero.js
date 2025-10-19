@@ -14,7 +14,7 @@ export default function Hero() {
                     <p>云朵一键部署平台让数据库管理和API部署变得前所未有的简单。无需复杂配置，几分钟内即可上线您的应用。</p>
                     <div className="hero-buttons">
                         <Link href="/auth/register" className="btn btn-primary">立即开始</Link>
-                        <Link href="/#features" className="btn btn-outline">了解更多</Link>
+                        <Link href="/docs" className="btn btn-outline">了解更多</Link>
                     </div>
                 </div>
                 <div className="hero-image">
