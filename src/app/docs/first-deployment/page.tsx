@@ -1,12 +1,13 @@
+
 "use client";
 import {JSX, useEffect, useState} from "react";
 import Image from "next/image";
 import Link from "next/link";
 
 const steps = [
-    { id: "step1", title: "填写注册信息", number: 1 },
-    { id: "step2", title: "邮箱认证", number: 2 },
-    { id: "step3", title: "登录使用", number: 3 },
+    { id: "step1", title: "将你的代码上传到GitHub（或其他代码托管平台）", number: 1 },
+    { id: "step2", title: "自定义Dockerfile(可选)", number: 2 },
+    { id: "step3", title: "创建api,平台会自动部署", number: 3 },
 ];
 
 export default function RegisterLoginDocs() {
@@ -41,9 +42,9 @@ export default function RegisterLoginDocs() {
             <div className="container mx-auto px-4 max-w-5xl">
                 {/* 页面头部 —— 单独一块 */}
                 <header className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-3">注册与登录指南</h1>
+                    <h1 className="text-4xl font-bold text-gray-900 mb-3">快速部署指南</h1>
                     <p className="text-lg text-gray-600">
-                        了解如何在云朵平台创建账户并开始使用我们的服务
+                        了解如何快速将您的应用部署到我们的平台
                     </p>
                 </header>
 
