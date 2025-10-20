@@ -10,7 +10,7 @@ export default function Pricing() {
             features: [
                 '1个数据库实例',
                 '1个API服务',
-                // '10GB 存储空间',
+                '500m CPU + 512MB 内存',
                 '基础技术支持',
                 '三级域名访问'
             ],
@@ -19,15 +19,15 @@ export default function Pricing() {
         },
         {
             name: '专业版(Coming soon)',
-            price: '¥29',
-            period: '每月',
+            price: '¥9.99',
+            period: '每月/API',
             description: '适合中小型企业和团队',
             features: [
                 '多个数据库实例',
                 '多个API服务',
-                // '100GB 存储空间',
+                '1G CPU + 1G 内存',
                 '优先技术支持',
-                '自定义域名',
+                '三级域名访问',
                 // '自动备份',
                 // '性能监控'
             ],
@@ -87,7 +87,7 @@ export default function Pricing() {
                                 ))}
                             </ul>
 
-                            <button className={`btn ${plan.popular ? 'btn-primary' : 'btn-outline'} full-width`}>
+                            <button onClick={() => window.location.href = '/auth/register'} className={`btn ${plan.popular ? 'btn-primary' : 'btn-outline'} full-width`}>
                                 {plan.buttonText}
                             </button>
                         </div>
