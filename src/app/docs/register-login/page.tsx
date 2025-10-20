@@ -38,68 +38,75 @@ export default function RegisterLoginDocs() {
 
     return (
         <div className="min-h-screen bg-gray-50 py-10">
-            <div className="container mx-auto px-4 max-w-5xl flex flex-col md:flex-row gap-10">
-                {/* 侧边导航栏 */}
-                <aside className="md:w-64 bg-white rounded-lg shadow p-6 h-fit sticky top-20">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4">内容导航</h2>
-                    <ul className="space-y-3">
+            <div className="container mx-auto px-4 max-w-5xl">
+                {/* 页面头部 —— 单独一块 */}
+                <header className="text-center mb-12">
+                    <h1 className="text-4xl font-bold text-gray-900 mb-3">注册与登录指南</h1>
+                    <p className="text-lg text-gray-600">
+                        了解如何在云朵平台创建账户并开始使用我们的服务
+                    </p>
+                </header>
+
+                {/* 下部分：左侧导航 + 主体内容 */}
+                <div className="flex flex-col md:flex-row gap-10">
+                    {/* 侧边导航栏 */}
+                    <aside className="md:w-64 bg-white rounded-lg shadow p-6 h-fit sticky top-20">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4">内容导航</h2>
+                        <ul className="space-y-3">
+                            {steps.map((s) => (
+                                <li key={s.id}>
+                                    <a
+                                        href={`#${s.id}`}
+                                        className={`block px-3 py-2 rounded-md font-medium transition-colors duration-150 ${
+                                            activeId === s.id
+                                                ? "bg-blue-100 text-blue-700"
+                                                : "text-blue-600 hover:bg-blue-50 hover:text-blue-800"
+                                        }`}
+                                    >
+                                        步骤{s.number}：{s.title}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </aside>
+
+                    {/* 主体内容 */}
+                    <main className="flex-1">
                         {steps.map((s) => (
-                            <li key={s.id}>
-                                <a
-                                    href={`#${s.id}`}
-                                    className={`block px-3 py-2 rounded-md font-medium transition-colors duration-150 ${
-                                        activeId === s.id
-                                            ? "bg-blue-100 text-blue-700"
-                                            : "text-blue-600 hover:bg-blue-50 hover:text-blue-800"
-                                    }`}
-                                >
-                                    步骤{s.number}：{s.title}
-                                </a>
-                            </li>
+                            <StepSection
+                                key={s.id}
+                                id={s.id}
+                                number={s.number}
+                                title={s.title}
+                            />
                         ))}
-                    </ul>
-                </aside>
 
-                {/* 主体内容 */}
-                <main className="flex-1">
-                    {/* 页面头部 */}
-                    <header className="text-center mb-12">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-3">注册与登录指南</h1>
-                        <p className="text-lg text-gray-600">
-                            了解如何在云朵平台创建账户并开始使用我们的服务
-                        </p>
-                    </header>
+                        <FAQSection />
 
-                    {/* 步骤内容 */}
-                    {steps.map((s) => (
-                        <StepSection key={s.id} id={s.id} number={s.number} title={s.title} />
-                    ))}
+                        {/* 页脚导航 */}
+                        <footer className="mt-12 flex justify-between">
+                            <Link
+                                href="/docs"
+                                className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                                <ArrowLeftIcon />
+                                返回文档中心
+                            </Link>
 
-                    {/* 常见问题 */}
-                    <FAQSection />
-
-                    {/* 导航链接 */}
-                    <footer className="mt-12 flex justify-between">
-                        <Link
-                            href="/docs"
-                            className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                            <ArrowLeftIcon />
-                            返回文档中心
-                        </Link>
-
-                        <Link
-                            href="/docs/first-deployment"
-                            className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
-                        >
-                            下一篇：首次部署指南
-                            <ArrowRightIcon />
-                        </Link>
-                    </footer>
-                </main>
+                            <Link
+                                href="/docs/first-deployment"
+                                className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                                下一篇：首次部署指南
+                                <ArrowRightIcon />
+                            </Link>
+                        </footer>
+                    </main>
+                </div>
             </div>
         </div>
     );
+
 }
 
 /* 单步内容组件 */
