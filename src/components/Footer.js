@@ -14,19 +14,19 @@ export default function Footer() {
 
     const footerLinks = {
         platform: [
-            { name: '关于我', href: '#' },
+            { name: '关于我', href: '/aboutMe' },
             // { name: '博客', href: '#' },
             // { name: '职业机会', href: '#' },
             // { name: '联系我们', href: '#' }
         ],
         product: [
-            { name: '功能', href: '#' },
+            { name: '功能', href: '/#features' },
             // { name: '定价', href: '#' },
             // { name: '文档', href: '#' },
             // { name: '状态', href: '#' }
         ],
         support: [
-            { name: '帮助中心', href: '#' },
+            { name: 'API文档', href: '/docs' },
             // { name: '社区论坛', href: '#' },
             // { name: 'API文档', href: '#' },
             // { name: '服务条款', href: '#' }
@@ -70,7 +70,7 @@ export default function Footer() {
                     <div className="footer-column">
                         <h3>关注我们</h3>
                         <ul className="footer-links">
-                            {footerLinks.social.map((link, index) => (
+                        {footerLinks.social.map((link, index) => (
                                 <li key={index}><a href={link.href} target="_blank"><i className={link.icon}></i> {link.name}</a></li>
                             ))}
                         </ul>
