@@ -1,39 +1,14 @@
-import DocLayout from "@/components/docs/DocLayout";
-import FAQSection from "@/components/docs/FAQSection";
+
 /* 单步内容组件 */
 import {JSX} from "react";
 import Image from "next/image";
 import Alert from "@/components/docs/Alert";
 
-
-const steps = [
-    { id: "step1", title: "填写注册信息", number: 1 },
-    { id: "step2", title: "邮箱认证", number: 2 },
-    { id: "step3", title: "登录使用", number: 3 },
-];
-
-export default function RegisterLoginDocs() {
-    return (
-        <DocLayout
-            title="注册与登录指南"
-            subtitle="了解如何在云朵平台创建账户并开始使用我们的服务"
-            steps={steps}
-            prev={{ href: "/docs", label: "返回文档中心" }}
-            next={{ href: "/docs/first-deployment", label: "下一篇：首次部署指南" }}
-        >
-            {steps.map((s) => (
-                <StepSection key={s.id} id={s.id} number={s.number} title={s.title} />
-            ))}
-            <FAQSection />
-        </DocLayout>
-    );
-}
-
-function StepSection({
-                                        id,
-                                        number,
-                                        title,
-                                    }: {
+export default function StepSection({
+                         id,
+                         number,
+                         title,
+                     }: {
     id: string;
     number: number;
     title: string;
