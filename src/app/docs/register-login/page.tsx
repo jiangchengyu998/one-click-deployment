@@ -1,6 +1,5 @@
 import DocLayout from "@/components/docs/DocLayout";
 import FAQSection from "@/components/docs/FAQSection";
-/* 单步内容组件 */
 import {JSX} from "react";
 import Image from "next/image";
 import Alert from "@/components/docs/Alert";
