@@ -13,28 +13,69 @@ export default function RegisterLoginDocs() {
     const [activeId, setActiveId] = useState<string>("step1");
 
     useEffect(() => {
-        // 平滑滚动
+        // 启用平滑滚动
         document.documentElement.style.scrollBehavior = "smooth";
 
-        // Intersection Observer 监听滚动位置
+        let ticking = false;
+
+        // Intersection Observer 回调
         const observer = new IntersectionObserver(
             (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
-                        setActiveId(entry.target.id);
-                    }
+                if (!ticking) {
+                    window.requestAnimationFrame(() => {
+                        const visible = entries
+                            .filter((e) => e.isIntersecting)
+                            .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+
+                        if (visible.length > 0) {
+                            const current = visible[0].target.id;
+                            setActiveId((prev) => (prev !== current ? current : prev));
+                        }
+
+                        ticking = false;
+                    });
+                    ticking = true;
                 }
             },
-            { rootMargin: "-50% 0px -50% 0px", threshold: 0.1 }
+            {
+                root: null, // 视口为 root
+                threshold: 0.3, // 元素可见30%时触发
+            }
         );
 
-        steps.forEach((s) => {
-            const el = document.getElementById(s.id);
-            if (el) observer.observe(el);
+        // 等待渲染完成后再绑定监听
+        const timeout = setTimeout(() => {
+            steps.forEach((s) => {
+                const el = document.getElementById(s.id);
+                if (el) observer.observe(el);
+            });
+        }, 100);
+
+        // 点击导航时平滑滚动并手动高亮
+        const links = document.querySelectorAll("a[href^='#']");
+        links.forEach((link) => {
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                const targetId = (e.currentTarget as HTMLAnchorElement).getAttribute("href")?.slice(1);
+                const targetEl = document.getElementById(targetId!);
+                if (targetEl) {
+                    const y = targetEl.getBoundingClientRect().top + window.scrollY - 80; // 顶部留空
+                    window.scrollTo({ top: y, behavior: "smooth" });
+                    setActiveId(targetId!);
+                }
+            });
         });
 
-        return () => observer.disconnect();
+        return () => {
+            clearTimeout(timeout);
+            observer.disconnect();
+            links.forEach((link) => {
+                link.replaceWith(link.cloneNode(true)); // 移除监听
+            });
+        };
     }, []);
+
+
 
     return (
         <div className="min-h-screen bg-gray-50 py-10">
