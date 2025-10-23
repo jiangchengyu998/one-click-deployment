@@ -1,116 +1,32 @@
-
-"use client";
-import {JSX, useEffect, useState} from "react";
+/* 单步内容组件 */
+import DocLayout from "@/components/docs/DocLayout";
+import {JSX} from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Alert from "@/components/docs/Alert";
+
 
 const steps = [
-    { id: "step1", title: "将你的代码上传到GitHub（或其他代码托管平台）", number: 1 },
+    { id: "step1", title: "将代码上传到GitHub", number: 1 },
     { id: "step2", title: "自定义Dockerfile(可选)", number: 2 },
-    { id: "step3", title: "创建api,平台会自动部署", number: 3 },
+    { id: "step3", title: "创建API,平台会自动部署", number: 3 },
 ];
 
 export default function RegisterLoginDocs() {
-    const [activeId, setActiveId] = useState<string>("step1");
-
-    useEffect(() => {
-        // 平滑滚动
-        document.documentElement.style.scrollBehavior = "smooth";
-
-        // Intersection Observer 监听滚动位置
-        const observer = new IntersectionObserver(
-            (entries) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
-                        setActiveId(entry.target.id);
-                    }
-                }
-            },
-            { rootMargin: "-50% 0px -50% 0px", threshold: 0.1 }
-        );
-
-        steps.forEach((s) => {
-            const el = document.getElementById(s.id);
-            if (el) observer.observe(el);
-        });
-
-        return () => observer.disconnect();
-    }, []);
-
     return (
-        <div className="min-h-screen bg-gray-50 py-10">
-            <div className="container mx-auto px-4 max-w-5xl">
-                {/* 页面头部 —— 单独一块 */}
-                <header className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-gray-900 mb-3">快速部署指南</h1>
-                    <p className="text-lg text-gray-600">
-                        了解如何快速将您的应用部署到我们的平台
-                    </p>
-                </header>
-
-                {/* 下部分：左侧导航 + 主体内容 */}
-                <div className="flex flex-col md:flex-row gap-10">
-                    {/* 侧边导航栏 */}
-                    <aside className="md:w-64 bg-white rounded-lg shadow p-6 h-fit sticky top-20">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">内容导航</h2>
-                        <ul className="space-y-3">
-                            {steps.map((s) => (
-                                <li key={s.id}>
-                                    <a
-                                        href={`#${s.id}`}
-                                        className={`block px-3 py-2 rounded-md font-medium transition-colors duration-150 ${
-                                            activeId === s.id
-                                                ? "bg-blue-100 text-blue-700"
-                                                : "text-blue-600 hover:bg-blue-50 hover:text-blue-800"
-                                        }`}
-                                    >
-                                        步骤{s.number}：{s.title}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </aside>
-
-                    {/* 主体内容 */}
-                    <main className="flex-1">
-                        {steps.map((s) => (
-                            <StepSection
-                                key={s.id}
-                                id={s.id}
-                                number={s.number}
-                                title={s.title}
-                            />
-                        ))}
-
-                        <FAQSection />
-
-                        {/* 页脚导航 */}
-                        <footer className="mt-12 flex justify-between">
-                            <Link
-                                href="/docs"
-                                className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
-                            >
-                                <ArrowLeftIcon />
-                                返回文档中心
-                            </Link>
-
-                            <Link
-                                href="/docs/first-deployment"
-                                className="flex items-center text-blue-600 hover:text-blue-800 font-medium"
-                            >
-                                下一篇：首次部署指南
-                                <ArrowRightIcon />
-                            </Link>
-                        </footer>
-                    </main>
-                </div>
-            </div>
-        </div>
+        <DocLayout
+            title="首次部署指南"
+            subtitle="了解如何快速将您的应用部署到我们的平台"
+            steps={steps}
+            prev={{ href: "/docs", label: "返回文档中心" }}
+            next={{ href: "/docs/first-deployment", label: "下一篇：首次部署指南" }}
+        >
+            {steps.map((s) => (
+                <StepSection key={s.id} id={s.id} number={s.number} title={s.title} />
+            ))}
+        </DocLayout>
     );
-
 }
 
-/* 单步内容组件 */
 function StepSection({
                          id,
                          number,
@@ -121,94 +37,138 @@ function StepSection({
     title: string;
 }) {
     const images: Record<string, string> = {
-        step1: "/images/register-form.png",
-        step2: "/images/register-email.png",
-        step3: "/images/login-form.png",
+        step1: "/images/github-upload.png",
+        step2: "/images/dockerfile-example.png",
+        step3: "/images/create-api.png",
     };
 
     const contentMap: Record<string, JSX.Element> = {
         step1: (
             <>
                 <p className="mb-6">
-                    点击首页右上角的<strong>「免费注册」</strong>按钮进入注册页面。
+                    将项目代码上传到 <strong>GitHub</strong> 或其他代码托管平台（如 Gitee、GitLab）。
                 </p>
-                <Alert type="info" text="请使用真实有效的邮箱地址，以便接收认证邮件。" />
-                <h3 className="text-xl font-semibold mt-6 mb-3">填写字段：</h3>
-                <ul className="list-disc list-inside space-y-2 mb-6">
-                    <li>邮箱地址 - 用于登录与通知</li>
-                    <li>用户名 - 显示在平台内的昵称</li>
-                    <li>密码 - 至少6位</li>
-                    <li>确认密码 - 再次输入以确认</li>
-                </ul>
-                <Image
-                    src={images[id]}
-                    alt="注册表单页面"
-                    width={900}
-                    height={500}
-                    className="rounded-lg shadow-md mb-6"
-                    loading="lazy"
+
+                <h3 className="text-xl font-semibold mt-6 mb-3">上传步骤：</h3>
+                <ol className="list-decimal list-inside space-y-2 mb-6">
+                    <li>在 GitHub 创建一个新的仓库。</li>
+                    <li>将本地项目代码提交并推送至该仓库。</li>
+                    <li>确保主分支（通常为 <code>main</code> 或 <code>master</code>）包含完整可运行的代码。</li>
+                </ol>
+
+                <Alert
+                    type="info"
+                    text="如果您的仓库是私有的，请前往 GitHub 个人设置中创建一个访问 Token（Personal Access Token）。"
                 />
-                <Alert type="success" text="系统会向您填写的邮箱发送认证邮件。" />
+
+                <p className="mb-6">
+                    在后续 <strong>创建 API</strong> 时，平台会需要您提供该 Token 以便访问代码。
+                </p>
+
+                {/*<Image*/}
+                {/*    src={images[id]}*/}
+                {/*    alt="上传代码至 GitHub 示例"*/}
+                {/*    width={900}*/}
+                {/*    height={500}*/}
+                {/*    className="rounded-lg shadow-md mb-6"*/}
+                {/*    loading="lazy"*/}
+                {/*/>*/}
+
+                <Alert
+                    type="success"
+                    text="✅ 成功上传后，您可以在浏览器中访问自己的仓库地址，确认代码可见。"
+                />
             </>
         ),
+
         step2: (
             <>
-                <p className="mb-6">提交注册后，请前往邮箱查收认证邮件。</p>
-                <ol className="list-decimal list-inside space-y-2 mb-6">
-                    <li>打开邮箱客户端（Gmail、QQ邮箱等）</li>
-                    <li>查找来自 <strong>jchengyu0829@163.com</strong> 的邮件</li>
-                    <li>点击邮件中的「验证邮箱地址」</li>
-                </ol>
+                <p className="mb-6">
+                    接下来，您可以在项目根目录中编写一个 <strong>Dockerfile</strong> 文件，用于定义项目的构建与运行方式。
+                </p>
+
                 <Alert
-                    type="warning"
-                    text="若未收到邮件，请检查垃圾邮件文件夹或稍后重试。"
+                    type="info"
+                    text="如果不熟悉 Docker，也可以跳过此步骤。平台会自动为常见框架（如 Node.js、Java、Python 等）生成 Dockerfile。"
                 />
-                <Image
-                    src={images[id]}
-                    alt="邮箱认证示例"
-                    width={900}
-                    height={500}
-                    className="rounded-lg shadow-md mb-6"
-                    loading="lazy"
+
+                <h3 className="text-xl font-semibold mt-6 mb-3">示例：Node.js 项目</h3>
+
+                <pre className="bg-gray-900 text-gray-100 text-sm p-4 rounded-lg mb-6 overflow-x-auto">
+{`# 使用 Node.js 官方镜像
+FROM node:18-alpine
+
+# 创建工作目录
+WORKDIR /app
+
+# 复制项目文件
+COPY . .
+
+# 安装依赖
+RUN npm install
+
+# 暴露端口
+EXPOSE 3000
+
+# 启动命令
+CMD ["npm", "start"]`}
+                </pre>
+
+                {/*<Image*/}
+                {/*    src={images[id]}*/}
+                {/*    alt="Dockerfile 示例图"*/}
+                {/*    width={900}*/}
+                {/*    height={500}*/}
+                {/*    className="rounded-lg shadow-md mb-6"*/}
+                {/*    loading="lazy"*/}
+                {/*/>*/}
+
+                <Alert
+                    type="success"
+                    text="💡 如果项目能在本地通过 Docker 构建并运行，那么部署时也一定能顺利执行。"
                 />
-                <Alert type="success" text="邮箱验证成功后，账户即被激活。" />
             </>
         ),
+
         step3: (
             <>
                 <p className="mb-6">
-                    认证完成后，返回首页点击「登录」进入登录页面。
+                    当代码上传完成后，就可以在平台中 <strong>创建 API 服务</strong> 了。平台会自动拉取您的代码并完成构建与部署。
                 </p>
-                <ul className="list-disc list-inside space-y-2 mb-6">
-                    <li>邮箱登录 - 使用注册邮箱</li>
-                    <li>密码登录 - 输入密码</li>
-                </ul>
-                <Image
-                    src={images[id]}
-                    alt="登录页面"
-                    width={900}
-                    height={500}
-                    className="rounded-lg shadow-md mb-6"
-                    loading="lazy"
-                />
+
+                <h3 className="text-xl font-semibold mt-6 mb-3">创建步骤：</h3>
+                <ol className="list-decimal list-inside space-y-2 mb-6">
+                    <li>在控制台中点击「<strong>创建 API</strong>」。</li>
+                    <li>填写必要的参数：
+                        <ul className="list-disc list-inside ml-6 mt-2">
+                            <li>API 名称（例如：<code>my-first-api</code>）</li>
+                            <li>仓库地址（GitHub/Gitee 等）</li>
+                            <li>分支名称（默认为 <code>main</code>）</li>
+                            <li>暴露端口（如 3000）</li>
+                        </ul>
+                    </li>
+                    <li>根据需要添加环境变量，例如数据库连接、API Key 等。</li>
+                    <li>点击「立即创建」，系统将自动开始部署。</li>
+                </ol>
+
                 <Alert
-                    type="info"
-                    text="⚠️ 请勿在公共设备上勾选『记住我』，以保护账户安全。"
+                    type="warning"
+                    text="首次部署可能需要数分钟，请耐心等待。部署完成后可在日志中查看状态。"
                 />
-                <ul className="list-disc list-inside space-y-2 mb-6">
-                    <li>创建与管理数据库实例</li>
-                    <li>部署 API 应用</li>
-                    <li>管理项目设置</li>
-                </ul>
-                <Image
-                    src="/images/user-dashboard.png"
-                    alt="控制台页面"
-                    width={900}
-                    height={500}
-                    className="rounded-lg shadow-md mb-6"
-                    loading="lazy"
+
+                {/*<Image*/}
+                {/*    src={images[id]}*/}
+                {/*    alt="API 创建页面示意图"*/}
+                {/*    width={900}*/}
+                {/*    height={500}*/}
+                {/*    className="rounded-lg shadow-md mb-6"*/}
+                {/*    loading="lazy"*/}
+                {/*/>*/}
+
+                <Alert
+                    type="success"
+                    text="🎉 部署成功后，平台会显示访问地址，您即可通过浏览器访问自己的应用！"
                 />
-                <Alert type="success" text="🎉 恭喜，您已完成注册与登录流程！" />
             </>
         ),
     };
@@ -223,79 +183,5 @@ function StepSection({
             </div>
             <div className="text-gray-700 leading-relaxed">{contentMap[id]}</div>
         </section>
-    );
-}
-
-/* FAQ */
-function FAQSection() {
-    const faqs = [
-        {
-            q: "收不到认证邮件怎么办？",
-            a: "请检查垃圾邮件文件夹，或将 jchengyu0829@163.com 添加到联系人列表。如果仍未收到，请尝试重新发送认证邮件或联系客服。",
-        },
-        {
-            q: "忘记密码怎么办？",
-            a: "在登录页面点击「忘记密码」链接，输入邮箱地址后，系统会发送重置邮件。",
-        },
-        {
-            q: "一个邮箱可以注册多个账户吗？",
-            a: "每个邮箱仅可注册一个账户。如需多个，请使用不同邮箱注册。",
-        },
-    ];
-
-    return (
-        <section className="bg-white rounded-lg shadow p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">常见问题</h2>
-            <div className="divide-y divide-gray-200">
-                {faqs.map((f, i) => (
-                    <div key={i} className="py-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{f.q}</h3>
-                        <p className="text-gray-700">{f.a}</p>
-                    </div>
-                ))}
-            </div>
-        </section>
-    );
-}
-
-/* 通用提示框 */
-function Alert({ type, text }: { type: "info" | "success" | "warning"; text: string }) {
-    const styles = {
-        info: "bg-blue-50 border-blue-500 text-blue-800",
-        success: "bg-green-50 border-green-500 text-green-800",
-        warning: "bg-yellow-50 border-yellow-500 text-yellow-800",
-    };
-    return (
-        <div className={`border-l-4 p-4 mb-6 ${styles[type]}`}>
-            <p>{text}</p>
-        </div>
-    );
-}
-
-/* 图标组件 */
-function ArrowLeftIcon() {
-    return (
-        <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-        >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-    );
-}
-function ArrowRightIcon() {
-    return (
-        <svg
-            className="w-5 h-5 ml-2"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-        >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-        </svg>
     );
 }
