@@ -10,20 +10,21 @@ export default function Docs() {
                 { name: '首次部署指南', href: '/docs/first-deployment', description: '完成您的第一次部署' }
             ]
         },
-        {
-            title: '数据库管理',
-            icon: 'fas fa-database',
-            items: [
-                { name: '创建数据库实例', href: '/docs/create-db-instance', description: '一键创建和管理数据库' },
-                { name: '数据库连接', href: '/docs/db-connection', description: '获取连接信息和凭据' },
-            ]
-        },
+        // {
+        //     title: '数据库管理',
+        //     icon: 'fas fa-database',
+        //     items: [
+        //         { name: '创建数据库实例', href: '/docs/create-db-instance', description: '一键创建和管理数据库' },
+        //         { name: '数据库连接', href: '/docs/db-connection', description: '获取连接信息和凭据' },
+        //     ]
+        // },
         {
             title: 'API部署',
             icon: 'fas fa-code',
             items: [
-                { name: '部署项目', href: '/docs/deploy-project', description: '将您的项目部署到云朵平台' },
-                { name: 'Dockerfile配置', href: '/docs/dockerfile-configuration', description: '自定义构建配置' },
+                { name: '创建数据库实例', href: '/docs/create-db-instance', description: '一键创建和管理数据库' },
+                { name: '部署项目', href: '/docs/first-deployment', description: '将您的项目部署到云朵平台' },
+                // { name: 'Dockerfile配置', href: '/docs/dockerfile-configuration', description: '自定义构建配置' },
             ]
         }
     ];
