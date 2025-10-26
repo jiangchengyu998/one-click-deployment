@@ -8,17 +8,17 @@ import Alert from "@/components/docs/Alert";
 const steps = [
     { id: "step1", title: "将代码上传到GitHub", number: 1 },
     { id: "step2", title: "自定义Dockerfile(可选)", number: 2 },
-    { id: "step3", title: "创建API,平台会自动部署", number: 3 },
+    { id: "step3", title: "创建API-平台会自动部署", number: 3 },
 ];
 
 export default function RegisterLoginDocs() {
     return (
         <DocLayout
-            title="首次部署指南"
+            title="部署指南"
             subtitle="了解如何快速将您的应用部署到我们的平台"
             steps={steps}
             prev={{ href: "/docs", label: "返回文档中心" }}
-            next={{ href: "/docs/first-deployment", label: "下一篇：首次部署指南" }}
+            next={{ href: "/docs/create-db-instance", label: "下一篇：创建数据库实例" }}
         >
             {steps.map((s) => (
                 <StepSection key={s.id} id={s.id} number={s.number} title={s.title} />
@@ -37,9 +37,9 @@ function StepSection({
     title: string;
 }) {
     const images: Record<string, string> = {
-        step1: "/images/github-upload.png",
-        step2: "/images/dockerfile-example.png",
-        step3: "/images/create-api.png",
+        step1: "/images/first-deploy/demo-repo.png",
+        // step2: "/images/dockerfile-example.png",
+        step3: "/images/first-deploy/first_deploy_api.png",
     };
 
     const contentMap: Record<string, JSX.Element> = {
@@ -65,14 +65,14 @@ function StepSection({
                     在后续 <strong>创建 API</strong> 时，平台会需要您提供该 Token 以便访问代码。
                 </p>
 
-                {/*<Image*/}
-                {/*    src={images[id]}*/}
-                {/*    alt="上传代码至 GitHub 示例"*/}
-                {/*    width={900}*/}
-                {/*    height={500}*/}
-                {/*    className="rounded-lg shadow-md mb-6"*/}
-                {/*    loading="lazy"*/}
-                {/*/>*/}
+                <Image
+                    src={images["step1"]}
+                    alt="上传代码至 GitHub 示例"
+                    width={900}
+                    height={500}
+                    className="rounded-lg shadow-md mb-6"
+                    loading="lazy"
+                />
 
                 <Alert
                     type="success"
@@ -92,26 +92,53 @@ function StepSection({
                     text="如果不熟悉 Docker，也可以跳过此步骤。平台会自动为常见框架（如 Node.js、Java、Python 等）生成 Dockerfile。"
                 />
 
-                <h3 className="text-xl font-semibold mt-6 mb-3">示例：Node.js 项目</h3>
+                <h3 className="text-xl font-semibold mt-6 mb-3">示例：springboot 项目</h3>
 
                 <pre className="bg-gray-900 text-gray-100 text-sm p-4 rounded-lg mb-6 overflow-x-auto">
-{`# 使用 Node.js 官方镜像
-FROM node:18-alpine
+{`# ————————————————————————————————
+# 第一阶段：编译 (Maven + JDK 8)
+# ————————————————————————————————
+FROM maven:3.8.7-eclipse-temurin-8 AS builder
 
-# 创建工作目录
+# 声明构建参数
+ARG SERVER_PORT
+
+# 设置工作目录
+WORKDIR /build
+
+# 先复制 pom.xml 下载依赖，加快构建
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# 再复制源码
+COPY src ./src
+
+# 构建 jar 包（跳过测试可提高速度）
+RUN mvn clean package -DskipTests
+
+# ————————————————————————————————
+# 第二阶段：运行 (JRE 8)
+# ————————————————————————————————
+FROM eclipse-temurin:8-jre AS runtime
+
+# 构建参数，设置默认端口
+ARG SERVER_PORT=8080
+
+# 设置时区、工作目录和环境变量
+ENV TZ=Asia/Shanghai \\
+    JAVA_OPTS="" \\
+    SERVER_PORT=\\$\\{SERVER_PORT\\}
+
 WORKDIR /app
 
-# 复制项目文件
-COPY . .
-
-# 安装依赖
-RUN npm install
+# 从构建阶段复制 jar
+COPY --from=builder /build/target/*.jar app.jar
 
 # 暴露端口
-EXPOSE 3000
+EXPOSE \\$\{SERVER_PORT\\}
 
-# 启动命令
-CMD ["npm", "start"]`}
+# 启动命令使用环境变量
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar --server.port=\\$\{SERVER_PORT\\}"]`}
                 </pre>
 
                 {/*<Image*/}
@@ -144,7 +171,6 @@ CMD ["npm", "start"]`}
                             <li>API 名称（例如：<code>my-first-api</code>）</li>
                             <li>仓库地址（GitHub/Gitee 等）</li>
                             <li>分支名称（默认为 <code>main</code>）</li>
-                            <li>暴露端口（如 3000）</li>
                         </ul>
                     </li>
                     <li>根据需要添加环境变量，例如数据库连接、API Key 等。</li>
@@ -156,14 +182,14 @@ CMD ["npm", "start"]`}
                     text="首次部署可能需要数分钟，请耐心等待。部署完成后可在日志中查看状态。"
                 />
 
-                {/*<Image*/}
-                {/*    src={images[id]}*/}
-                {/*    alt="API 创建页面示意图"*/}
-                {/*    width={900}*/}
-                {/*    height={500}*/}
-                {/*    className="rounded-lg shadow-md mb-6"*/}
-                {/*    loading="lazy"*/}
-                {/*/>*/}
+                <Image
+                    src={images[id]}
+                    alt="API 创建页面示意图"
+                    width={900}
+                    height={500}
+                    className="rounded-lg shadow-md mb-6"
+                    loading="lazy"
+                />
 
                 <Alert
                     type="success"
