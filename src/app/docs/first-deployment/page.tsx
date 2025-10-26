@@ -127,7 +127,7 @@ ARG SERVER_PORT=8080
 # 设置时区、工作目录和环境变量
 ENV TZ=Asia/Shanghai \\
     JAVA_OPTS="" \\
-    SERVER_PORT=\\$\\{SERVER_PORT\\}
+    SERVER_PORT=\$\{SERVER_PORT\}
 
 WORKDIR /app
 
@@ -135,10 +135,10 @@ WORKDIR /app
 COPY --from=builder /build/target/*.jar app.jar
 
 # 暴露端口
-EXPOSE \\$\{SERVER_PORT\\}
+EXPOSE \$\{SERVER_PORT\}
 
 # 启动命令使用环境变量
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar --server.port=\\$\{SERVER_PORT\\}"]`}
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar --server.port=\$\{SERVER_PORT\}"]`}
                 </pre>
 
                 {/*<Image*/}
