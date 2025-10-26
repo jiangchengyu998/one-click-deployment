@@ -1,7 +1,7 @@
 // src/app/admin/login/page.js (更新版)
 "use client";
 
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AdminLogin() {
@@ -10,6 +10,18 @@ export default function AdminLogin() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    useEffect(() => {
+        const checkLogin = async () => {
+            const response = await fetch("/api/admin/check-login");
+            const data = await response.json();
+            if (response.ok && data.isLoggedIn) {
+                router.push("/admin");
+            }
+        };
+        checkLogin().then(r => {
+            console.log(r);
+        });
+    }, [router]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
