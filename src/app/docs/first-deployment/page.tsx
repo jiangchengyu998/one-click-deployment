@@ -174,8 +174,17 @@ ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar --server.port=\$\{SER
                         </ul>
                     </li>
                     <li>根据需要添加环境变量，例如数据库连接、API Key 等。</li>
+                    <Alert
+                        type="warning"
+                        text="注意，环境变量的key一般都是大写的，如果是springboot项目,请将环境变量中的下划线_替换为点.,全部改为大写，例如：spring.datasource.url 替换为 SPRING_DATASOURCE_URL"
+                    />
                     <li>点击「立即创建」，系统将自动开始部署。</li>
                 </ol>
+
+                <Alert
+                    type="warning"
+                    text="如果您的代码仓库是私有的，请确保在创建 API 时提供正确的访问 Token。"
+                />
 
                 <Alert
                     type="warning"
