@@ -27,7 +27,7 @@ export default function Workflow() {
             <style jsx>{`
         .workflow {
           padding: 80px 0;
-          background: var(--white);
+          //background: var(--white);
         }
         
         .steps {
