@@ -1,7 +1,6 @@
-# 使用一个已包含 corepack 的 Node.js 官方镜像
-FROM node:18-alpine AS base
+# 使用支持 Prisma 的官方 Node.js 20 镜像
+FROM node:20-alpine AS base
 
-# 声明构建参数
 ARG SERVER_PORT=3000
 
 # 阶段 1: 安装依赖
@@ -30,12 +29,11 @@ RUN pnpm install --frozen-lockfile
 RUN pnpx prisma generate
 RUN pnpm run build
 
-# 阶段 3: 准备运行环境
-FROM node:18-alpine AS runner
+# 阶段 3: 运行环境
+FROM node:20-alpine AS runner
 WORKDIR /app
 RUN corepack enable
 
-# 再次声明 ARG，才能在此阶段使用
 ARG SERVER_PORT=3000
 ENV PORT=${SERVER_PORT}
 ENV HOSTNAME="0.0.0.0"
