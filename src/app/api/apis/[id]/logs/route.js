@@ -59,7 +59,7 @@ export async function GET(request, { params }) {
         const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
 
         // Jenkins API 通常使用 GET 请求获取日志
-        const jenkinsUrlForLog = `${jenkinsUrl}/job/deploy_api/${buildNumber}/consoleText`;
+        const jenkinsUrlForLog = `${jenkinsUrl}/job/deploy_api_by_k3s/${buildNumber}/consoleText`;
         console.log('请求Jenkins URL:', jenkinsUrlForLog);
 
         const response = await fetch(jenkinsUrlForLog, {

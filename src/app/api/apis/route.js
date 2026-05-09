@@ -133,7 +133,7 @@ export async function POST(request) {
 
         }
 
-        // 调用 http://192.168.101.51:8080/job/deploy_api/  部署服务
+        // 调用 http://192.168.101.51:8080/job/deploy_api_by_k3s/  部署服务
         // 构建参数字符串
         const queryDeployApi = new URLSearchParams({
             GIT_URL: api.gitUrl,
@@ -149,7 +149,7 @@ export async function POST(request) {
         }).toString();
 
         const responseDeployApi = await fetch(
-            `${pipelineUrl}/job/deploy_api/buildWithParameters?${queryDeployApi}`,
+            `${pipelineUrl}/job/deploy_api_by_k3s/buildWithParameters?${queryDeployApi}`,
             {
                 method: 'POST',
                 headers: {

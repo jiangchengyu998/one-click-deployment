@@ -87,7 +87,7 @@ export async function POST(request, { params }) {
         }).toString();
 
         const response = await fetch(
-            `${pipelineUrl}/job/deploy_api/buildWithParameters?${query}`,
+            `${pipelineUrl}/job/deploy_api_by_k3s/buildWithParameters?${query}`,
             {
                 method: 'POST',
                 headers: {
