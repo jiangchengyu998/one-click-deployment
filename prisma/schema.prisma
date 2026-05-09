@@ -19,18 +19,18 @@ model Admin {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  code              String   @unique
+  id                String     @id @default(cuid())
+  code              String     @unique
   name              String
-  email             String   @unique
+  email             String     @unique
   avatar            String?
   password          String
-  apiQuota          Int      @default(2)
-  dbQuota           Int      @default(1)
-  isVerified        Boolean  @default(false)
+  apiQuota          Int        @default(2)
+  dbQuota           Int        @default(1)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  isVerified        Boolean    @default(false)
   verificationToken String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
   apis              Api[]
   databases         Database[]
 
@@ -42,7 +42,6 @@ model Api {
   userId    String
   name      String
   gitUrl    String
-  branch    String? @default("main") // 添加这行
   gitToken  String?
   lastJobId String?
   domain    String
@@ -50,6 +49,7 @@ model Api {
   status    ApiStatus  @default(PENDING)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  branch    String?    @default("main")
   api_infor ApiInfor[]
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -58,14 +58,14 @@ model Api {
 }
 
 model ApiInfor {
-  id          String   @id @default(cuid())
+  id         String   @id @default(cuid())
   apiId      String
+  createdAt  DateTime @default(now()) @db.DateTime(0)
+  execNode   String
   serverIp   String
   serverPort Int
-  execNode   String
-  createdAt  DateTime @default(now()) @db.DateTime(0)
   updatedAt  DateTime @default(now()) @db.DateTime(0)
-  apis        Api      @relation(fields: [apiId], references: [id], onDelete: Cascade, map: "fk_api_id")
+  apis       Api      @relation(fields: [apiId], references: [id], onDelete: Cascade, map: "fk_api_id")
 
   @@index([apiId], map: "fk_api_id")
   @@map("api_infor")
