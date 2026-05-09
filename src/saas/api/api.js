@@ -37,7 +37,7 @@ export async function createDnsRecord(api, user, apiInfor) {
 }
 
 export async function createNginxConfig(api, apiInfor, user) {
-    // 添加nginx等配置
+/*    // 添加nginx等配置
     console.log('添加nginx等配置');
     // 2. 调用 http://192.168.101.51:8080/job/add_nginx_file/ pipeline 创建nginx配置文件
     // 构建参数字符串
@@ -65,7 +65,7 @@ export async function createNginxConfig(api, apiInfor, user) {
     } else {
         console.error('调用Jenkins创建Nginx配置文件失败:', responseAddNginx.status, responseAddNginx.statusText);
         throw new Error('调用Jenkins创建Nginx配置文件失败');
-    }
+    }*/
     return true;
 }
 
