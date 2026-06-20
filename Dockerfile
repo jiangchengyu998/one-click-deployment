@@ -1,42 +1,45 @@
-# 使用支持 Prisma 的官方 Node.js 20 镜像
 FROM node:20-alpine AS base
 
-ARG SERVER_PORT=3000
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN apk add --no-cache libc6-compat openssl
+RUN corepack enable
+
+WORKDIR /app
 
 # 阶段 1: 安装依赖
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
-
-WORKDIR /app
-
-RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm fetch --prod
+RUN pnpm install --frozen-lockfile
 
 # 阶段 2: 构建应用
 FROM base AS builder
-WORKDIR /app
-RUN corepack enable
 
-ENV NEXT_PUBLIC_MAIN_DOMAIN="xxxxx.xxx"
-ENV NEXT_PUBLIC_MODE="opensource"
+ARG NEXT_PUBLIC_MAIN_DOMAIN="xxxxx.xxx"
+ARG NEXT_PUBLIC_MODE="opensource"
 
-COPY package.json pnpm-lock.yaml ./
+ENV NEXT_PUBLIC_MAIN_DOMAIN=${NEXT_PUBLIC_MAIN_DOMAIN}
+ENV NEXT_PUBLIC_MODE=${NEXT_PUBLIC_MODE}
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-RUN pnpm install --frozen-lockfile
-RUN pnpx prisma generate
+RUN pnpm exec prisma generate
 RUN pnpm run build
 
 # 阶段 3: 运行环境
 FROM node:20-alpine AS runner
+
+RUN apk add --no-cache libc6-compat openssl
+
 WORKDIR /app
-RUN corepack enable
 
 ARG SERVER_PORT=3000
 ENV PORT=${SERVER_PORT}
 ENV HOSTNAME="0.0.0.0"
+ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs

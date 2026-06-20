@@ -104,42 +104,37 @@
 ### base 阶段
 
 - 基础镜像：`node:20-alpine`。
-- 声明 `SERVER_PORT=3000`。
+- 设置 `PNPM_HOME`、`PATH` 和 `NEXT_TELEMETRY_DISABLED=1`。
+- 安装 `libc6-compat` 与 `openssl`，满足 Alpine 环境下 Next.js/Prisma 的运行兼容需求。
+- 开启 `corepack`。
+- 设置工作目录 `/app`。
 
 ### deps 阶段
 
-- 安装 `libc6-compat`。
-- 开启 `corepack`。
 - 复制 `package.json` 和 `pnpm-lock.yaml`。
-- 执行 `pnpm fetch --prod`。
-
-注意：`pnpm fetch --prod` 主要填充 pnpm store，通常不会在 `/app` 下生成完整 `node_modules`。但 builder 阶段有：
-
-```dockerfile
-COPY --from=deps /app/node_modules ./node_modules
-```
-
-这可能导致 Docker 构建时找不到 `/app/node_modules`。更常见的写法是 deps 阶段执行 `pnpm install --frozen-lockfile`，或在 builder 阶段直接安装并正确复用 pnpm store 缓存。
+- 执行 `pnpm install --frozen-lockfile`，生成完整 `node_modules`。
+- 该阶段只依赖包清单和锁文件，便于 Docker 层缓存复用。
 
 ### builder 阶段
 
-- 再次开启 `corepack`。
-- 设置构建时默认环境变量：
+- 从 deps 阶段复制 `node_modules`。
+- 通过 build args 设置构建期公开变量，默认值为：
   - `NEXT_PUBLIC_MAIN_DOMAIN="xxxxx.xxx"`
   - `NEXT_PUBLIC_MODE="opensource"`
-- 复制依赖、源码。
+- 复制源码。
 - 执行：
-  - `pnpm install --frozen-lockfile`
-  - `pnpx prisma generate`
+  - `pnpm exec prisma generate`
   - `pnpm run build`
 - `next.config.ts` 中配置了 `output: "standalone"`，因此构建会产出 `.next/standalone`。
 
 ### runner 阶段
 
-- 使用 `node:20-alpine` 作为运行镜像。
+- 使用干净的 `node:20-alpine` 作为运行镜像基础。
+- 只安装运行所需的 `libc6-compat` 与 `openssl`，不携带 pnpm/corepack 构建工具链。
 - 设置：
   - `PORT=${SERVER_PORT}`
   - `HOSTNAME=0.0.0.0`
+  - `NODE_ENV=production`
 - 创建非 root 用户 `nextjs`。
 - 复制：
   - `/app/public`
@@ -288,11 +283,7 @@ const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64
 
 ## 5. 技术债务
 
-### 5.1 Dockerfile 的依赖阶段可能无法构建
-
-`Dockerfile` 第 14 行执行 `pnpm fetch --prod`，第 25 行复制 `/app/node_modules`。`pnpm fetch` 不等于 `pnpm install`，通常不会创建完整 `node_modules`，因此该 COPY 存在失败风险。
-
-### 5.2 README 与 package 脚本不一致
+### 5.1 README 与 package 脚本不一致
 
 `README.md` 中写了：
 
@@ -308,7 +299,7 @@ npm run db:init
 
 没有 `db:init`、`prisma migrate` 或 `prisma db push` 相关脚本。
 
-### 5.3 认证工具存在默认弱密钥
+### 5.2 认证工具存在默认弱密钥
 
 `src/lib/auth.js` 中：
 
@@ -318,7 +309,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key'
 
 如果生产环境遗漏 `JWT_SECRET`，系统会使用默认值签发 token。应在启动时强制校验关键环境变量。
 
-### 5.4 部分管理员接口调用 `getAdminSession()` 时未传 request
+### 5.3 部分管理员接口调用 `getAdminSession()` 时未传 request
 
 `getAdminSession(request)` 依赖 `request.cookies`，但以下文件中存在不传 `request` 的调用：
 
@@ -327,11 +318,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key'
 
 由于 `getAdminSession` 内部 catch 后返回 null，这会导致这些接口始终未授权，而不是暴露明确错误。
 
-### 5.5 `src/lib/utils.js` 使用未导入的 `prisma`
+### 5.4 `src/lib/utils.js` 使用未导入的 `prisma`
 
 `isCodeUnique` 中调用了 `prisma.user.findUnique`，但文件没有导入 `prisma`。该函数一旦被调用会抛出 `ReferenceError`。
 
-### 5.6 部署状态依赖进程内 `setTimeout`
+### 5.5 部署状态依赖进程内 `setTimeout`
 
 API 部署和数据库创建中使用 `setTimeout` 更新状态：
 
@@ -351,7 +342,7 @@ API 部署和数据库创建中使用 `setTimeout` 更新状态：
 - 后台任务队列。
 - 定时任务扫描超时记录。
 
-### 5.7 外部系统调用与数据库写入没有事务边界
+### 5.6 外部系统调用与数据库写入没有事务边界
 
 创建 API 的流程大致是：
 
@@ -362,7 +353,7 @@ API 部署和数据库创建中使用 `setTimeout` 更新状态：
 
 如果 Jenkins 调用失败，数据库中已经有了 `Api` 和 `ApiInfor` 记录，但状态可能仍是 `PENDING`。数据库创建流程也类似：先写记录，再异步调用 Jenkins。缺少补偿或事务状态机。
 
-### 5.8 端口分配存在并发冲突
+### 5.7 端口分配存在并发冲突
 
 `src/app/api/apis/route.js` 通过查询当前最大 `serverPort` 再 `+1` 分配端口：
 
@@ -375,14 +366,14 @@ const nextPort = maxPortRecord ? maxPortRecord.serverPort + 1 : 4000;
 
 并发创建 API 时可能分配到相同端口。`schema.prisma` 中也没有对 `serverIp + serverPort` 建唯一约束。
 
-### 5.9 敏感信息处理不完整
+### 5.8 敏感信息处理不完整
 
 - `Api.gitToken` 以明文字符串存储。
 - `Database.password` 当前使用 bcrypt 哈希，但数据库创建时仍需要原始密码调用 Jenkins；这说明展示/重试/恢复能力会受限。
 - `db_password_utils.js` 提供 AES 加解密，但使用固定 IV，且密钥长度校验被注释，当前没有被数据库创建流程使用。
 - `next.config.ts` 把 `JENKINS_URL` 和 `JENKINS_TOKEN` 放入 `env` 配置。Next 的 `env` 会被内联到构建产物中，敏感 token 不建议通过该方式暴露。
 
-### 5.10 输入校验较弱
+### 5.9 输入校验较弱
 
 接口多数只检查是否为空，缺少更严格的格式校验：
 
@@ -393,7 +384,7 @@ const nextPort = maxPortRecord ? maxPortRecord.serverPort + 1 : 4000;
 - 数据库名、用户名是否满足 MySQL 命名规则。
 - `serverPort` 范围与数字合法性。
 
-### 5.11 Middleware 只保护页面，不保护 API
+### 5.10 Middleware 只保护页面，不保护 API
 
 `src/middleware.js` 的 matcher 只包含：
 
@@ -405,7 +396,7 @@ API 权限依赖每个 route handler 自己调用 session 校验。当前虽然�
 
 另外 `publicPaths` 里包含 `/apis/*/webhook`，但 matcher 不匹配 `/api/**`，且字符串 `startsWith('/apis/*/webhook')` 也不会匹配真实动态路径。
 
-### 5.12 JS/TS 混用导致类型保护有限
+### 5.11 JS/TS 混用导致类型保护有限
 
 项目开启 `strict: true`，但大量核心后端和页面仍是 `.js`：
 
@@ -415,11 +406,11 @@ API 权限依赖每个 route handler 自己调用 session 校验。当前虽然�
 
 这会降低 Prisma 类型、请求体结构、环境变量和状态枚举的静态检查收益。
 
-### 5.13 日志与调试输出较多
+### 5.12 日志与调试输出较多
 
 多个接口中存在 `console.log` 调试输出，包含 Jenkins 响应、API 信息、端口信息等。生产环境建议接入结构化日志，并避免输出 token、Git 地址、部署细节等敏感信息。
 
-### 5.14 缺少测试与质量门禁
+### 5.13 缺少测试与质量门禁
 
 `package.json` 中没有：
 
@@ -431,7 +422,7 @@ API 权限依赖每个 route handler 自己调用 session 校验。当前虽然�
 
 仓库里存在 `test.js`，但没有脚本挂载。当前很难在 CI 中快速发现构建、类型、路由和 Prisma schema 问题。
 
-### 5.15 部分功能标记为模拟或 TODO
+### 5.14 部分功能标记为模拟或 TODO
 
 示例：
 
@@ -498,4 +489,4 @@ flowchart LR
 5. 为 `ApiInfor.serverIp + serverPort` 增加唯一约束或引入端口分配表。
 6. 统一 JS/TS，优先迁移 `src/lib` 和 `src/app/api`。
 7. 补齐 `lint`、`typecheck`、`test`、`db:migrate`、`db:seed` 脚本。
-8. 修正 Dockerfile 依赖安装阶段，确保镜像可重复构建。
+8. 继续收敛运行时环境变量，避免在 Next 构建产物中内联服务端敏感配置。
