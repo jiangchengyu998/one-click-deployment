@@ -1,0 +1,39 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    env:
+      REPO_NAME: ${{ github.event.repository.name }}
+      GIT_URL: ${{ github.server_url }}/${{ github.repository }}.git
+      TAG: ${{ github.sha }}
+      IMAGE_NAME: ${{ vars.REGISTRY_URL }}/${{ github.event.repository.name }}:${{ github.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build image
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --load \
+            --build-arg NEXT_PUBLIC_MAIN_DOMAIN="${{ vars.NEXT_PUBLIC_MAIN_DOMAIN || 'xxxxx.xxx' }}" \
+            --build-arg NEXT_PUBLIC_MODE="${{ vars.NEXT_PUBLIC_MODE || 'opensource' }}" \
+            -t "${IMAGE_NAME}" \
+            .
+
+      - name: Push image
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          docker push "${IMAGE_NAME}"
