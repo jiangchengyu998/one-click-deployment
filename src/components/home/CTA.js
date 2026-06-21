@@ -4,49 +4,17 @@ import Link from 'next/link';
 
 export default function CTA() {
     return (
-        <section id="cta" className="cta">
-            <div className="container">
-                <div className="cta-content">
-                    <h2>立即开始您的部署之旅</h2>
-                    <p>加入数千名开发者，体验简单高效的部署流程</p>
-                    {/* 修改按钮链接 */}
-                    <Link href="/auth/register" className="btn btn-light">免费注册</Link>
+        <section id="cta" className="bg-gradient-to-br from-[#4a6ee0] to-[#7b68ee] py-20 text-center text-white max-md:py-16">
+            <div className="mx-auto w-full max-w-[1400px] px-5 max-md:px-4">
+                <div>
+                    <h2 className="mb-5 text-4xl font-bold max-md:text-3xl">准备好把下一个项目部署出去了吗？</h2>
+                    <p className="mx-auto mb-8 max-w-2xl text-lg opacity-90 max-md:text-base">从创建数据库到访问 API，先用免费版跑通完整流程。</p>
+                    <div className="flex justify-center gap-4 max-sm:flex-col">
+                        <Link href="/auth/register" className="inline-flex cursor-pointer items-center justify-center rounded-lg bg-white px-5 py-2.5 text-base font-medium text-[#4a6ee0] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)] max-md:px-4 max-md:py-2 max-md:text-sm">免费注册</Link>
+                        <Link href="/docs/first-deployment" className="inline-flex cursor-pointer items-center justify-center rounded-lg border border-white/70 px-5 py-2.5 text-base font-medium text-white transition duration-300 hover:-translate-y-0.5 hover:bg-white/10 max-md:px-4 max-md:py-2 max-md:text-sm">首次部署指南</Link>
+                    </div>
                 </div>
             </div>
-            <style jsx>{`
-        .cta {
-          padding: 80px 0;
-          text-align: center;
-          background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-          color: var(--white);
-        }
-        
-        .cta-content h2 {
-          font-size: 36px;
-          margin-bottom: 20px;
-        }
-        
-        .cta-content p {
-          font-size: 18px;
-          max-width: 600px;
-          margin: 0 auto 30px;
-          opacity: 0.9;
-        }
-        
-        @media (max-width: 768px) {
-          .cta {
-            padding: 60px 0;
-          }
-          
-          .cta-content h2 {
-            font-size: 28px;
-          }
-          
-          .cta-content p {
-            font-size: 16px;
-          }
-        }
-      `}</style>
         </section>
     )
 }

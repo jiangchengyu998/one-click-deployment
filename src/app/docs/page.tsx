@@ -30,11 +30,11 @@ export default function Docs() {
     ];
 
     return (
-        <div className="docs-page">
-            <div className="container">
-                <div className="docs-header">
-                    <h1>文档中心</h1>
-                    <p>全面的使用指南和最佳实践，帮助您充分利用云朵平台</p>
+        <div className="min-h-screen bg-[#f8f9fa] py-20 max-md:py-16">
+            <div className="mx-auto w-full max-w-[1400px] px-5 max-md:px-4">
+                <div className="mb-[60px] text-center">
+                    <h1 className="mb-5 text-5xl font-bold text-[#333] max-md:text-4xl">文档中心</h1>
+                    <p className="mx-auto max-w-2xl text-xl text-[#666]">全面的使用指南和最佳实践，帮助您充分利用云朵平台</p>
                     {/*<div className="search-box">*/}
                     {/*    <input*/}
                     {/*        type="text"*/}
@@ -45,235 +45,29 @@ export default function Docs() {
                     {/*</div>*/}
                 </div>
 
-                <div className="docs-grid">
+                <div className="mb-[60px] grid grid-cols-[repeat(auto-fit,minmax(350px,1fr))] gap-8 max-md:grid-cols-1">
                     {docCategories.map((category, index) => (
-                        <div key={index} className="docs-category">
-                            <div className="category-header">
-                                <i className={category.icon}></i>
-                                <h2>{category.title}</h2>
+                        <div key={index} className="rounded-xl bg-white p-8 shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+                            <div className="mb-6 flex items-center border-b-2 border-gray-100 pb-4">
+                                <i className={`${category.icon} mr-4 text-2xl text-[#4a6ee0]`}></i>
+                                <h2 className="text-2xl font-semibold text-[#333]">{category.title}</h2>
                             </div>
-                            <div className="docs-list">
+                            <div className="flex flex-col gap-4">
                                 {category.items.map((item, itemIndex) => (
-                                    <a key={itemIndex} href={item.href} className="doc-item">
-                                        <div className="doc-content">
-                                            <h3>{item.name}</h3>
-                                            <p>{item.description}</p>
+                                    <a key={itemIndex} href={item.href} className="group flex items-center justify-between rounded-lg p-4 text-inherit no-underline transition hover:bg-gray-50">
+                                        <div>
+                                            <h3 className="mb-1 text-base font-semibold text-[#333]">{item.name}</h3>
+                                            <p className="m-0 text-sm text-[#666]">{item.description}</p>
                                         </div>
-                                        <i className="fas fa-chevron-right"></i>
+                                        <i className="fas fa-chevron-right text-[#666] transition group-hover:translate-x-1 group-hover:text-[#4a6ee0]"></i>
                                     </a>
                                 ))}
                             </div>
                         </div>
                     ))}
                 </div>
-
-                {/*<div className="docs-support">*/}
-                {/*    <div className="support-card">*/}
-                {/*        <i className="fas fa-question-circle"></i>*/}
-                {/*        <h3>需要帮助？</h3>*/}
-                {/*        <p>我们的技术支持团队随时为您服务</p>*/}
-                {/*        <div className="support-buttons">*/}
-                {/*            <button className="btn btn-primary">*/}
-                {/*                <i className="fas fa-envelope"></i>*/}
-                {/*                联系支持*/}
-                {/*            </button>*/}
-                {/*            <button className="btn btn-outline">*/}
-                {/*                <i className="fab fa-github"></i>*/}
-                {/*                GitHub Issues*/}
-                {/*            </button>*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
             </div>
 
-            <style jsx>{`
-        .docs-page {
-          padding: 80px 0;
-          background: var(--light-bg);
-          min-height: 100vh;
-        }
-
-        .docs-header {
-          text-align: center;
-          margin-bottom: 60px;
-        }
-
-        .docs-header h1 {
-          font-size: 48px;
-          margin-bottom: 20px;
-          color: var(--dark-text);
-        }
-
-        .docs-header p {
-          font-size: 20px;
-          color: var(--light-text);
-          max-width: 600px;
-          margin: 0 auto 30px;
-        }
-
-        .search-box {
-          position: relative;
-          max-width: 500px;
-          margin: 0 auto;
-        }
-
-        .search-input {
-          width: 100%;
-          padding: 15px 50px 15px 20px;
-          border: 2px solid #e0e0e0;
-          border-radius: 50px;
-          font-size: 16px;
-          transition: border-color 0.3s;
-        }
-
-        .search-input:focus {
-          outline: none;
-          border-color: var(--primary-color);
-        }
-
-        .search-box i {
-          position: absolute;
-          right: 20px;
-          top: 50%;
-          transform: translateY(-50%);
-          color: var(--light-text);
-        }
-
-        .docs-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-          gap: 30px;
-          margin-bottom: 60px;
-        }
-
-        .docs-category {
-          background: var(--white);
-          border-radius: 12px;
-          padding: 30px;
-          box-shadow: var(--shadow);
-        }
-
-        .category-header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 25px;
-          padding-bottom: 15px;
-          border-bottom: 2px solid #f5f5f5;
-        }
-
-        .category-header i {
-          font-size: 24px;
-          color: var(--primary-color);
-          margin-right: 15px;
-        }
-
-        .category-header h2 {
-          font-size: 24px;
-          color: var(--dark-text);
-        }
-
-        .docs-list {
-          display: flex;
-          flex-direction: column;
-          gap: 15px;
-        }
-
-        .doc-item {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 15px;
-          border-radius: var(--radius);
-          text-decoration: none;
-          color: inherit;
-          transition: background-color 0.3s;
-        }
-
-        .doc-item:hover {
-          background: #f8f9fa;
-        }
-
-        .doc-content h3 {
-          font-size: 16px;
-          margin-bottom: 5px;
-          color: var(--dark-text);
-        }
-
-        .doc-content p {
-          font-size: 14px;
-          color: var(--light-text);
-          margin: 0;
-        }
-
-        .doc-item i {
-          color: var(--light-text);
-          transition: transform 0.3s;
-        }
-
-        .doc-item:hover i {
-          transform: translateX(5px);
-          color: var(--primary-color);
-        }
-
-        .docs-support {
-          text-align: center;
-          max-width: 500px;
-          margin: 0 auto;
-        }
-
-        .support-card {
-          background: var(--white);
-          padding: 40px;
-          border-radius: 12px;
-          box-shadow: var(--shadow);
-        }
-
-        .support-card i {
-          font-size: 48px;
-          color: var(--primary-color);
-          margin-bottom: 20px;
-        }
-
-        .support-card h3 {
-          margin-bottom: 10px;
-          color: var(--dark-text);
-        }
-
-        .support-card p {
-          color: var(--light-text);
-          margin-bottom: 25px;
-        }
-
-        .support-buttons {
-          display: flex;
-          gap: 15px;
-          justify-content: center;
-        }
-
-        .support-buttons .btn {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        @media (max-width: 768px) {
-          .docs-page {
-            padding: 60px 0;
-          }
-
-          .docs-header h1 {
-            font-size: 36px;
-          }
-
-          .docs-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .support-buttons {
-            flex-direction: column;
-          }
-        }
-      `}</style>
         </div>
     );
 }

@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import StatusBadge from '@/components/ui/StatusBadge';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 
 export default function DatabaseDetail() {
@@ -65,33 +67,8 @@ export default function DatabaseDetail() {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'RUNNING': return 'bg-green-100 text-green-800';
-            case 'CREATING': return 'bg-yellow-100 text-yellow-800';
-            case 'ERROR': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'RUNNING': return '运行中';
-            case 'CREATING': return '创建中';
-            case 'ERROR': return '错误';
-            default: return '未知';
-        }
-    };
-
     if (loading) {
-        return (
-            <div className="p-6">
-                <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <LoadingSkeleton rows={1} itemClassName="h-64" showToolbar={false} />;
     }
 
     if (!database) {
@@ -143,9 +120,7 @@ export default function DatabaseDetail() {
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">状态</span>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(database.status)}`}>
-                {getStatusText(database.status)}
-              </span>
+                            <StatusBadge status={database.status} type="database" />
                         </div>
                         <div className="flex justify-between">
                             <span className="text-gray-600">创建时间</span>

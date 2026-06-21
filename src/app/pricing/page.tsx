@@ -1,6 +1,8 @@
 // src/app/pricing/page.tsx
 "use client";
 export default function Pricing() {
+    const primaryButton = 'inline-flex w-full cursor-pointer items-center justify-center rounded-lg bg-[#4a6ee0] px-5 py-2.5 text-base font-medium text-white transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]'
+    const outlineButton = 'inline-flex w-full cursor-pointer items-center justify-center rounded-lg border border-[#4a6ee0] px-5 py-2.5 text-base font-medium text-[#4a6ee0] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]'
     const plans = [
         {
             name: '免费版',
@@ -54,40 +56,40 @@ export default function Pricing() {
     ];
 
     return (
-        <div className="pricing-page">
-            <div className="container">
-                <div className="page-header">
-                    <h1>简单透明的定价</h1>
-                    <p>选择最适合您业务的方案，所有计划都包含核心功能</p>
+        <div className="bg-[#f8f9fa] py-20 max-md:py-16">
+            <div className="mx-auto w-full max-w-[1400px] px-5 max-md:px-4">
+                <div className="mb-[60px] text-center">
+                    <h1 className="mb-5 text-5xl font-bold text-[#333] max-md:text-4xl">简单透明的定价</h1>
+                    <p className="mx-auto max-w-2xl text-xl text-[#666]">选择最适合您业务的方案，所有计划都包含核心功能</p>
                 </div>
 
-                <div className="pricing-grid">
+                <div className="mb-20 grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-8 max-md:grid-cols-1">
                     {plans.map((plan, index) => (
                         <div
                             key={index}
-                            className={`pricing-card ${plan.popular ? 'popular' : ''}`}
+                            className={`relative rounded-xl bg-white px-8 py-10 text-center shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition duration-300 hover:-translate-y-1 ${plan.popular ? 'border-2 border-[#4a6ee0]' : 'border border-transparent'}`}
                         >
-                            {plan.popular && <div className="popular-badge">最受欢迎</div>}
+                            {plan.popular && <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-[#4a6ee0] px-4 py-1 text-sm font-semibold text-white">最受欢迎</div>}
 
-                            <div className="plan-header">
-                                <h3>{plan.name}</h3>
-                                <div className="price">
-                                    <span className="amount">{plan.price}</span>
-                                    {plan.period && <span className="period">/{plan.period}</span>}
+                            <div>
+                                <h3 className="mb-4 text-2xl font-semibold">{plan.name}</h3>
+                                <div className="mb-4">
+                                    <span className="text-5xl font-bold text-[#333]">{plan.price}</span>
+                                    {plan.period && <span className="text-base text-[#666]">/{plan.period}</span>}
                                 </div>
-                                <p className="plan-description">{plan.description}</p>
+                                <p className="mb-8 text-[#666]">{plan.description}</p>
                             </div>
 
-                            <ul className="features-list">
+                            <ul className="my-8 list-none text-left">
                                 {plan.features.map((feature, featureIndex) => (
-                                    <li key={featureIndex}>
-                                        <i className="fas fa-check"></i>
+                                    <li key={featureIndex} className="flex items-center border-b border-gray-100 py-2.5 last:border-b-0">
+                                        <i className="fas fa-check mr-2.5 text-emerald-500"></i>
                                         {feature}
                                     </li>
                                 ))}
                             </ul>
 
-                            <button onClick={() => window.location.href = '/auth/register'} className={`btn ${plan.popular ? 'btn-primary' : 'btn-outline'} full-width`}>
+                            <button onClick={() => window.location.href = '/auth/register'} className={plan.popular ? primaryButton : outlineButton}>
                                 {plan.buttonText}
                             </button>
                         </div>
@@ -117,171 +119,6 @@ export default function Pricing() {
                 {/*</div>*/}
             </div>
 
-            <style jsx>{`
-        .pricing-page {
-          padding: 80px 0;
-          background: var(--light-bg);
-        }
-
-        .page-header {
-          text-align: center;
-          margin-bottom: 60px;
-        }
-
-        .page-header h1 {
-          font-size: 48px;
-          margin-bottom: 20px;
-          color: var(--dark-text);
-        }
-
-        .page-header p {
-          font-size: 20px;
-          color: var(--light-text);
-          max-width: 600px;
-          margin: 0 auto;
-        }
-
-        .pricing-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 30px;
-          margin-bottom: 80px;
-        }
-
-        .pricing-card {
-          background: var(--white);
-          border-radius: 12px;
-          padding: 40px 30px;
-          box-shadow: var(--shadow);
-          position: relative;
-          text-align: center;
-          transition: transform 0.3s;
-        }
-
-        .pricing-card:hover {
-          transform: translateY(-5px);
-        }
-
-        .pricing-card.popular {
-          border: 2px solid var(--primary-color);
-        }
-
-        .popular-badge {
-          position: absolute;
-          top: -10px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: var(--primary-color);
-          color: white;
-          padding: 5px 15px;
-          border-radius: 20px;
-          font-size: 14px;
-          font-weight: 600;
-        }
-
-        .plan-header h3 {
-          font-size: 24px;
-          margin-bottom: 15px;
-        }
-
-        .price {
-          margin-bottom: 15px;
-        }
-
-        .amount {
-          font-size: 48px;
-          font-weight: bold;
-          color: var(--dark-text);
-        }
-
-        .period {
-          font-size: 16px;
-          color: var(--light-text);
-        }
-
-        .plan-description {
-          color: var(--light-text);
-          margin-bottom: 30px;
-        }
-
-        .features-list {
-          list-style: none;
-          margin: 30px 0;
-          text-align: left;
-        }
-
-        .features-list li {
-          padding: 10px 0;
-          border-bottom: 1px solid #f0f0f0;
-          display: flex;
-          align-items: center;
-        }
-
-        .features-list li:last-child {
-          border-bottom: none;
-        }
-
-        .features-list i {
-          color: var(--success-color);
-          margin-right: 10px;
-        }
-
-        .full-width {
-          width: 100%;
-        }
-
-        .pricing-faq {
-          max-width: 800px;
-          margin: 0 auto;
-        }
-
-        .pricing-faq h2 {
-          text-align: center;
-          margin-bottom: 40px;
-          font-size: 36px;
-        }
-
-        .faq-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-          gap: 30px;
-        }
-
-        .faq-item {
-          background: var(--white);
-          padding: 25px;
-          border-radius: var(--radius);
-          box-shadow: var(--shadow);
-        }
-
-        .faq-item h4 {
-          margin-bottom: 10px;
-          color: var(--dark-text);
-        }
-
-        .faq-item p {
-          color: var(--light-text);
-          line-height: 1.6;
-        }
-
-        @media (max-width: 768px) {
-          .pricing-page {
-            padding: 60px 0;
-          }
-
-          .page-header h1 {
-            font-size: 36px;
-          }
-
-          .pricing-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .faq-grid {
-            grid-template-columns: 1fr;
-          }
-        }
-      `}</style>
         </div>
     );
 }

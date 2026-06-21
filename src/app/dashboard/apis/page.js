@@ -4,6 +4,30 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import StatusBadge from '@/components/ui/StatusBadge';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+
+const initialNewApi = {
+    name: '',
+    gitUrl: '',
+    gitToken: '',
+    branch: 'main',
+    envs: [],
+    dockerfile: 'default',
+};
+
+function envListToObject(envs) {
+    const result = {};
+
+    envs.forEach((env) => {
+        const key = env.key.trim();
+        if (key) {
+            result[key] = env.value;
+        }
+    });
+
+    return result;
+}
 
 export default function UserApis() {
     const [apis, setApis] = useState([]);
@@ -13,15 +37,7 @@ export default function UserApis() {
     const [actionLoading, setActionLoading] = useState(false);
     const router = useRouter();
 
-    // 新API表单状态
-    const [newApi, setNewApi] = useState({
-        name: '',
-        gitUrl: '',
-        gitToken: '',
-        branch: 'main', // 添加默认分支
-        envs: [], // 新增环境变量字段
-        dockerfile: 'default' // default 或 custom
-    });
+    const [newApi, setNewApi] = useState(initialNewApi);
 
     useEffect(() => {
         fetchApis();
@@ -66,17 +82,9 @@ export default function UserApis() {
 
         try {
 
-            // 将 envs 数组转换为对象
-            const envsObject = {};
-            newApi.envs.forEach(env => {
-                if (env.key && env.key.trim() !== '') {
-                    envsObject[env.key.trim()] = env.value;
-                }
-            });
-
             const payload = {
                 ...newApi,
-                envs: envsObject
+                envs: envListToObject(newApi.envs),
             };
 
             const response = await fetch('/api/apis', {
@@ -89,12 +97,7 @@ export default function UserApis() {
 
             if (response.ok) {
                 setShowCreateModal(false);
-                setNewApi({
-                    name: '',
-                    gitUrl: '',
-                    gitToken: '',
-                    dockerfile: 'default'
-                });
+                setNewApi(initialNewApi);
                 fetchApis();
                 fetchUserQuota();
             } else {
@@ -149,26 +152,6 @@ export default function UserApis() {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'RUNNING': return 'bg-green-100 text-green-800';
-            case 'BUILDING': return 'bg-yellow-100 text-yellow-800';
-            case 'PENDING': return 'bg-blue-100 text-blue-800';
-            case 'ERROR': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'RUNNING': return '运行中';
-            case 'BUILDING': return '构建中';
-            case 'PENDING': return '等待中';
-            case 'ERROR': return '错误';
-            default: return '未知';
-        }
-    };
-
     // --- 修改环境变量操作 ---
     const handleAddEnv = () => {
         const newEnv = {
@@ -199,19 +182,7 @@ export default function UserApis() {
     };
 
     if (loading) {
-        return (
-            <div className="p-6">
-                <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-12 bg-gray-200 rounded mb-4"></div>
-                    <div className="space-y-3">
-                        {[...Array(3)].map((_, i) => (
-                            <div key={i} className="h-24 bg-gray-200 rounded"></div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
+        return <LoadingSkeleton rows={3} itemClassName="h-24" />;
     }
 
     return (
@@ -245,9 +216,7 @@ export default function UserApis() {
                                         <h3 className="text-lg leading-6 font-medium text-gray-900">{api.name}</h3>
                                     </div>
                                 </div>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(api.status)}`}>
-                  {getStatusText(api.status)}
-                </span>
+                                <StatusBadge status={api.status} />
                             </div>
 
                             <div className="mt-4 space-y-2">

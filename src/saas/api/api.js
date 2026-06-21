@@ -7,6 +7,7 @@ const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64
 
 
 export async function createDnsRecord(api, user, apiInfor) {
+/*
     // 这里可以调用实际的DNS记录创建逻辑
     console.log('Creating DNS record (simulated)');
     // 1. 调用http://192.168.101.51:8080/job/add_rr/ pipeline 创建dns记录
@@ -33,6 +34,7 @@ export async function createDnsRecord(api, user, apiInfor) {
         console.error('调用Jenkins创建DNS记录失败:', response.status, response.statusText);
         throw new Error('调用Jenkins创建DNS记录失败');
     }
+ */
     return true;
 }
 

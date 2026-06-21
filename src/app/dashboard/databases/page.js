@@ -4,6 +4,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import StatusBadge from '@/components/ui/StatusBadge';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 export default function UserDatabases() {
     const [databases, setDatabases] = useState([]);
@@ -137,33 +139,9 @@ export default function UserDatabases() {
         }));
     };
 
-    // 状态配置
-    const statusConfig = {
-        RUNNING: { color: 'bg-green-100 text-green-800', text: '运行中' },
-        CREATING: { color: 'bg-yellow-100 text-yellow-800', text: '创建中' },
-        ERROR: { color: 'bg-red-100 text-red-800', text: '错误' },
-        default: { color: 'bg-gray-100 text-gray-800', text: '未知' }
-    };
-
-    const getStatusInfo = (status) => {
-        return statusConfig[status] || statusConfig.default;
-    };
-
     // 加载状态
     if (loading) {
-        return (
-            <div className="p-6">
-                <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-12 bg-gray-200 rounded mb-4"></div>
-                    <div className="space-y-3">
-                        {[...Array(3)].map((_, i) => (
-                            <div key={i} className="h-24 bg-gray-200 rounded"></div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
+        return <LoadingSkeleton rows={3} itemClassName="h-24" />;
     }
 
     const hasQuota = userQuota.currentDbs < userQuota.dbQuota;
@@ -198,9 +176,7 @@ export default function UserDatabases() {
 
             {/* 数据库列表 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {databases.map((db) => {
-                    const statusInfo = getStatusInfo(db.status);
-                    return (
+                {databases.map((db) => (
                         <div key={db.id} className="bg-white shadow rounded-lg overflow-hidden border border-gray-200">
                             <div className="px-4 py-5 sm:p-6">
                                 <div className="flex items-center justify-between mb-4">
@@ -214,9 +190,7 @@ export default function UserDatabases() {
                                             </h3>
                                         </div>
                                     </div>
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusInfo.color} flex-shrink-0 ml-2`}>
-                                        {statusInfo.text}
-                                    </span>
+                                    <StatusBadge status={db.status} type="database" className="flex-shrink-0 ml-2" />
                                 </div>
 
                                 <div className="mt-4 space-y-2">
@@ -249,8 +223,7 @@ export default function UserDatabases() {
                                 </div>
                             </div>
                         </div>
-                    );
-                })}
+                ))}
             </div>
 
             {/* 空状态 */}

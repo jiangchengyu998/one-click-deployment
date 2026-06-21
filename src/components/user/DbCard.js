@@ -1,25 +1,9 @@
 // src/components/user/DbCard.js
 "use client";
 
+import StatusBadge from '@/components/ui/StatusBadge';
+
 export default function DbCard({ database, onDelete, onView }) {
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'RUNNING': return 'bg-green-100 text-green-800'
-            case 'CREATING': return 'bg-yellow-100 text-yellow-800'
-            case 'ERROR': return 'bg-red-100 text-red-800'
-            default: return 'bg-gray-100 text-gray-800'
-        }
-    }
-
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'RUNNING': return '运行中'
-            case 'CREATING': return '创建中'
-            case 'ERROR': return '错误'
-            default: return '未知'
-        }
-    }
-
     return (
         <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="px-4 py-5 sm:p-6">
@@ -33,9 +17,7 @@ export default function DbCard({ database, onDelete, onView }) {
                             <p className="text-sm text-gray-500 mt-1">{database.host}</p>
                         </div>
                     </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(database.status)}`}>
-            {getStatusText(database.status)}
-          </span>
+                    <StatusBadge status={database.status} type="database" />
                 </div>
 
                 <div className="mt-4">

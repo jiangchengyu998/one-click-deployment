@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 function LoginForm({ router }) {
     const [email, setEmail] = useState("");
@@ -54,7 +55,7 @@ function LoginForm({ router }) {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center">
-                    <i className="fas fa-cloud text-blue-500 text-5xl mb-4"></i>
+                    <Logo className="mx-auto mb-4 h-16 w-16" />
                     <h2 className="text-3xl font-extrabold text-gray-900">用户登录</h2>
                     <p className="mt-2 text-sm text-gray-600">
                         登录您的云朵平台账户

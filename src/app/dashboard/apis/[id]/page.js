@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import StatusBadge from '@/components/ui/StatusBadge';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 export default function ApiDetail() {
     const [api, setApi] = useState(null);
@@ -194,35 +196,8 @@ export default function ApiDetail() {
         setEditingToken(newToken);
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'RUNNING': return 'bg-green-100 text-green-800';
-            case 'BUILDING': return 'bg-yellow-100 text-yellow-800';
-            case 'PENDING': return 'bg-blue-100 text-blue-800';
-            case 'ERROR': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'RUNNING': return '运行中';
-            case 'BUILDING': return '构建中';
-            case 'PENDING': return '等待中';
-            case 'ERROR': return '错误';
-            default: return '未知';
-        }
-    };
-
     if (loading) {
-        return (
-            <div className="p-6">
-                <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-64 bg-gray-200 rounded"></div>
-                </div>
-            </div>
-        );
+        return <LoadingSkeleton rows={1} itemClassName="h-64" showToolbar={false} />;
     }
 
     if (!api) {
@@ -332,9 +307,7 @@ export default function ApiDetail() {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-600">状态</span>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(api.status)}`}>
-                  {getStatusText(api.status)}
-                </span>
+                                <StatusBadge status={api.status} />
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-600">创建时间</span>

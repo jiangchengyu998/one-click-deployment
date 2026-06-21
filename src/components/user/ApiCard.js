@@ -1,25 +1,9 @@
 // src/components/user/ApiCard.js
 "use client";
 
+import StatusBadge from '@/components/ui/StatusBadge';
+
 export default function ApiCard({ api, onDelete, onView }) {
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'RUNNING': return 'bg-green-100 text-green-800'
-            case 'BUILDING': return 'bg-yellow-100 text-yellow-800'
-            case 'ERROR': return 'bg-red-100 text-red-800'
-            default: return 'bg-gray-100 text-gray-800'
-        }
-    }
-
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'RUNNING': return '运行中'
-            case 'BUILDING': return '构建中'
-            case 'ERROR': return '错误'
-            default: return '等待中'
-        }
-    }
-
     return (
         <div className="bg-white shadow rounded-lg overflow-hidden">
             <div className="px-4 py-5 sm:p-6">
@@ -33,9 +17,7 @@ export default function ApiCard({ api, onDelete, onView }) {
                             <p className="text-sm text-gray-500 mt-1">{api.domain}</p>
                         </div>
                     </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(api.status)}`}>
-            {getStatusText(api.status)}
-          </span>
+                    <StatusBadge status={api.status} />
                 </div>
 
                 <div className="mt-4">

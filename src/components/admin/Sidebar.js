@@ -3,6 +3,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import Logo from '@/components/Logo'
 
 const navigation = [
     { name: '仪表板', href: '/admin', icon: 'fas fa-tachometer-alt' },
@@ -32,10 +33,7 @@ export default function AdminSidebar({ open, setOpen }) {
         ${open ? 'translate-x-0' : '-translate-x-full'}
       `}>
                 <div className="flex items-center justify-center h-16 px-4 bg-gray-900">
-                    <div className="flex items-center">
-                        <i className="fas fa-cloud text-white text-2xl mr-2"></i>
-                        <span className="text-white text-xl font-semibold">管理后台</span>
-                    </div>
+                    <Logo showWordmark wordmark="管理后台" className="h-9 w-9" markClassName="text-white text-xl" />
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">

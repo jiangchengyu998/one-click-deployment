@@ -119,7 +119,7 @@
 
 - 从 deps 阶段复制 `node_modules`。
 - 通过 build args 设置构建期公开变量，默认值为：
-  - `NEXT_PUBLIC_MAIN_DOMAIN="xxxxx.xxx"`
+  - `NEXT_PUBLIC_MAIN_DOMAIN="ydphoto.com"`
   - `NEXT_PUBLIC_MODE="opensource"`
 - 复制源码。
 - 执行：

@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 
 export default function DashboardLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -44,10 +45,7 @@ export default function DashboardLayout({ children }) {
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
                 <div className="flex items-center justify-center h-16 px-4 bg-gray-900">
-                    <div className="flex items-center">
-                        <i className="fas fa-cloud text-white text-2xl mr-2"></i>
-                        <span className="text-white text-xl font-semibold">用户控制台</span>
-                    </div>
+                    <Logo showWordmark wordmark="用户控制台" className="h-9 w-9" markClassName="text-white text-xl" />
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">

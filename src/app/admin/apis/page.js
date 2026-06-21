@@ -3,6 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import StatusBadge from '@/components/ui/StatusBadge';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 export default function AdminApis() {
     const [apis, setApis] = useState([]);
@@ -161,26 +163,6 @@ export default function AdminApis() {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'RUNNING': return 'bg-green-100 text-green-800';
-            case 'BUILDING': return 'bg-yellow-100 text-yellow-800';
-            case 'PENDING': return 'bg-blue-100 text-blue-800';
-            case 'ERROR': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'RUNNING': return '运行中';
-            case 'BUILDING': return '构建中';
-            case 'PENDING': return '等待中';
-            case 'ERROR': return '错误';
-            default: return '未知';
-        }
-    };
-
     const filteredApis = apis.filter(api => {
         const matchesSearch = api.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             api.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -198,19 +180,7 @@ export default function AdminApis() {
     };
 
     if (loading) {
-        return (
-            <div className="p-6">
-                <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-12 bg-gray-200 rounded mb-4"></div>
-                    <div className="space-y-3">
-                        {[...Array(5)].map((_, i) => (
-                            <div key={i} className="h-16 bg-gray-200 rounded"></div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
+        return <LoadingSkeleton rows={5} itemClassName="h-16" />;
     }
 
     return (
@@ -322,9 +292,7 @@ export default function AdminApis() {
                                 </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(api.status)}`}>
-                                {getStatusText(api.status)}
-                              </span>
+                              <StatusBadge status={api.status} />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {new Date(api.createdAt).toLocaleDateString('zh-CN')}
@@ -406,9 +374,7 @@ export default function AdminApis() {
                                         </div>
                                         <div>
                                             <span className="text-sm text-gray-500">状态:</span>
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(showDetailModal.status)}`}>
-                                                {getStatusText(showDetailModal.status)}
-                                            </span>
+                                            <StatusBadge status={showDetailModal.status} />
                                         </div>
                                         <div>
                                             <span className="text-sm text-gray-500">创建时间:</span>

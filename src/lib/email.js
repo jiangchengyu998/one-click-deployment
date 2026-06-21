@@ -45,7 +45,13 @@ export async function sendVerificationEmail(email, verificationToken, name) {
     `,
     };
 
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('验证邮件发送结果:', {
+        messageId: info.messageId,
+        accepted: info.accepted,
+        rejected: info.rejected,
+        response: info.response,
+    });
 }
 export async function sendDeployInfoEmail(email, status, apiName,apiId) {
 
@@ -123,5 +129,11 @@ export async function sendDeployInfoEmail(email, status, apiName,apiId) {
 `,
     };
 
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('部署通知邮件发送结果:', {
+        messageId: info.messageId,
+        accepted: info.accepted,
+        rejected: info.rejected,
+        response: info.response,
+    });
 }

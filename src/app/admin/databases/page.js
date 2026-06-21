@@ -3,6 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import StatusBadge from '@/components/ui/StatusBadge';
+import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 
 export default function AdminDatabases() {
     const [databases, setDatabases] = useState([]);
@@ -73,24 +75,6 @@ export default function AdminDatabases() {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status) {
-            case 'RUNNING': return 'bg-green-100 text-green-800';
-            case 'CREATING': return 'bg-yellow-100 text-yellow-800';
-            case 'ERROR': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
-        }
-    };
-
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'RUNNING': return '运行中';
-            case 'CREATING': return '创建中';
-            case 'ERROR': return '错误';
-            default: return '未知';
-        }
-    };
-
     const filteredDatabases = databases.filter(db => {
         const matchesSearch = db.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             db.user.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -106,19 +90,7 @@ export default function AdminDatabases() {
     };
 
     if (loading) {
-        return (
-            <div className="p-6">
-                <div className="animate-pulse">
-                    <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-                    <div className="h-12 bg-gray-200 rounded mb-4"></div>
-                    <div className="space-y-3">
-                        {[...Array(5)].map((_, i) => (
-                            <div key={i} className="h-16 bg-gray-200 rounded"></div>
-                        ))}
-                    </div>
-                </div>
-            </div>
-        );
+        return <LoadingSkeleton rows={5} itemClassName="h-16" />;
     }
 
     return (
@@ -209,9 +181,7 @@ export default function AdminDatabases() {
                                 <div className="text-sm text-gray-500">用户: {db.username}</div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(db.status)}`}>
-                    {getStatusText(db.status)}
-                  </span>
+                  <StatusBadge status={db.status} type="database" />
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {new Date(db.createdAt).toLocaleDateString('zh-CN')}
@@ -286,9 +256,7 @@ export default function AdminDatabases() {
                                         </div>
                                         <div>
                                             <span className="text-sm text-gray-500">状态:</span>
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(showDetailModal.status)}`}>
-                        {getStatusText(showDetailModal.status)}
-                      </span>
+                                            <StatusBadge status={showDetailModal.status} type="database" />
                                         </div>
                                         <div>
                                             <span className="text-sm text-gray-500">创建时间:</span>

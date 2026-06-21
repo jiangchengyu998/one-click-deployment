@@ -2,26 +2,31 @@
 "use client";
 
 import {useEffect, useState} from 'react';
-import { useRouter } from 'next/navigation';
+import Logo from '@/components/Logo';
 
 export default function AdminLogin() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
+
+    const goToDashboard = () => {
+        window.location.replace('/admin');
+    };
+
     useEffect(() => {
         const checkLogin = async () => {
-            const response = await fetch("/api/admin/check-login");
+            const response = await fetch('/api/admin/check-login', {
+                cache: 'no-store',
+                credentials: 'include',
+            });
             const data = await response.json();
             if (response.ok && data.isLoggedIn) {
-                router.push("/admin");
+                goToDashboard();
             }
         };
-        checkLogin().then(r => {
-            console.log(r);
-        });
-    }, [router]);
+        checkLogin();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -34,14 +39,15 @@ export default function AdminLogin() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
+                credentials: 'include',
                 body: JSON.stringify({ username, password }),
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // 登录成功，跳转到管理员首页
-                router.push('/admin');
+                goToDashboard();
+                return;
             } else {
                 setError(data.error || '登录失败');
             }
@@ -56,7 +62,7 @@ export default function AdminLogin() {
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center">
-                    <i className="fas fa-cloud text-blue-500 text-5xl mb-4"></i>
+                    <Logo className="mx-auto mb-4 h-16 w-16" />
                     <h2 className="mt-2 text-3xl font-extrabold text-gray-900">
                         管理员登录
                     </h2>

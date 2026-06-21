@@ -50,9 +50,12 @@ export async function POST(request) {
             { status: 200 }
         );
 
+        const isHttps = request.headers.get('x-forwarded-proto') === 'https' ||
+            request.nextUrl.protocol === 'https:';
+
         response.cookies.set('admin-token', token, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: isHttps,
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60, // 7天
             path: '/',

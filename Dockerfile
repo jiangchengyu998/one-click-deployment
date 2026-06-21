@@ -1,23 +1,30 @@
-FROM node:20-alpine AS base
+ARG NODE_IMAGE=node:20-alpine
+
+FROM ${NODE_IMAGE} AS base
+
+ARG PNPM_VERSION=10.18.3
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN apk add --no-cache libc6-compat openssl
-RUN corepack enable
+RUN --mount=type=cache,id=apk-cache,target=/var/cache/apk \
+    apk add --update-cache libc6-compat openssl
+RUN corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate
 
 WORKDIR /app
 
 # 阶段 1: 安装依赖
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm config set store-dir /pnpm/store && \
+    pnpm install --frozen-lockfile --prefer-offline
 
 # 阶段 2: 构建应用
 FROM base AS builder
 
-ARG NEXT_PUBLIC_MAIN_DOMAIN="xxxxx.xxx"
+ARG NEXT_PUBLIC_MAIN_DOMAIN="ydphoto.com"
 ARG NEXT_PUBLIC_MODE="opensource"
 
 ENV NEXT_PUBLIC_MAIN_DOMAIN=${NEXT_PUBLIC_MAIN_DOMAIN}
@@ -27,12 +34,14 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 RUN pnpm exec prisma generate
-RUN pnpm run build
+RUN --mount=type=cache,id=next-cache,target=/app/.next/cache \
+    pnpm run build
 
 # 阶段 3: 运行环境
-FROM node:20-alpine AS runner
+FROM ${NODE_IMAGE} AS runner
 
-RUN apk add --no-cache libc6-compat openssl
+RUN --mount=type=cache,id=apk-cache,target=/var/cache/apk \
+    apk add --update-cache libc6-compat openssl
 
 WORKDIR /app
 
