@@ -8,76 +8,78 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
-    env:
-      REPO_NAME: ${{ github.event.repository.name }}
-      GIT_URL: ${{ github.server_url }}/${{ github.repository }}.git
-      TAG: ${{ github.sha }}
-      IMAGE_NAME: 192.168.50.18:5000/${{ github.event.repository.name }}:${{ github.sha }}
-      NODE_IMAGE: ${{ vars.NODE_IMAGE || '192.168.50.18:5000/node:20-alpine' }}
-      BUILDX_CACHE_DIR: /tmp/.buildx-cache/${{ github.event.repository.name }}
-      BUILDX_CACHE_NEW_DIR: /tmp/.buildx-cache-new/${{ github.event.repository.name }}
-      CD_ENVIRONMENT: dev
+    # env:
+    #   REPO_NAME: ${{ github.event.repository.name }}
+    #   GIT_URL: ${{ github.server_url }}/${{ github.repository }}.git
+    #   TAG: ${{ github.sha }}
+    #   IMAGE_NAME: 192.168.50.18:5000/${{ github.event.repository.name }}:${{ github.sha }}
+    #   NODE_IMAGE: ${{ vars.NODE_IMAGE || '192.168.50.18:5000/node:20-alpine' }}
+    #   BUILDX_CACHE_DIR: /tmp/.buildx-cache/${{ github.event.repository.name }}
+    #   BUILDX_CACHE_NEW_DIR: /tmp/.buildx-cache-new/${{ github.event.repository.name }}
+    #   CD_ENVIRONMENT: dev
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: CI
+        run: echo 'test'
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          buildkitd-config-inline: |
-            [registry."192.168.50.18:5000"]
-              http = true
-              insecure = true
+      # - name: Set up Docker Buildx
+      #   uses: docker/setup-buildx-action@v3
+      #   with:
+      #     buildkitd-config-inline: |
+      #       [registry."192.168.50.18:5000"]
+      #         http = true
+      #         insecure = true
 
-      - name: Build image
-        run: |
-          docker buildx build \
-            --platform linux/amd64 \
-            --load \
-            --cache-from type=local,src="${BUILDX_CACHE_DIR}" \
-            --cache-to type=local,dest="${BUILDX_CACHE_NEW_DIR}",mode=max \
-            --build-arg NODE_IMAGE="${NODE_IMAGE}" \
-            --build-arg NEXT_PUBLIC_MAIN_DOMAIN="${{ vars.NEXT_PUBLIC_MAIN_DOMAIN || 'ydphoto.com' }}" \
-            --build-arg NEXT_PUBLIC_MODE="${{ vars.NEXT_PUBLIC_MODE || 'opensource' }}" \
-            -t "${IMAGE_NAME}" \
-            .
+      # - name: Build image
+      #   run: |
+      #     docker buildx build \
+      #       --platform linux/amd64 \
+      #       --load \
+      #       --cache-from type=local,src="${BUILDX_CACHE_DIR}" \
+      #       --cache-to type=local,dest="${BUILDX_CACHE_NEW_DIR}",mode=max \
+      #       --build-arg NODE_IMAGE="${NODE_IMAGE}" \
+      #       --build-arg NEXT_PUBLIC_MAIN_DOMAIN="${{ vars.NEXT_PUBLIC_MAIN_DOMAIN || 'ydphoto.com' }}" \
+      #       --build-arg NEXT_PUBLIC_MODE="${{ vars.NEXT_PUBLIC_MODE || 'opensource' }}" \
+      #       -t "${IMAGE_NAME}" \
+      #       .
 
-      - name: Rotate buildx cache
-        run: |
-          if [ -d "${BUILDX_CACHE_NEW_DIR}" ]; then
-            mkdir -p "$(dirname "${BUILDX_CACHE_DIR}")"
-            rm -rf "${BUILDX_CACHE_DIR}"
-            mv "${BUILDX_CACHE_NEW_DIR}" "${BUILDX_CACHE_DIR}"
-          else
-            echo "No new buildx cache directory found at ${BUILDX_CACHE_NEW_DIR}; skipping cache rotation."
-          fi
+      # - name: Rotate buildx cache
+      #   run: |
+      #     if [ -d "${BUILDX_CACHE_NEW_DIR}" ]; then
+      #       mkdir -p "$(dirname "${BUILDX_CACHE_DIR}")"
+      #       rm -rf "${BUILDX_CACHE_DIR}"
+      #       mv "${BUILDX_CACHE_NEW_DIR}" "${BUILDX_CACHE_DIR}"
+      #     else
+      #       echo "No new buildx cache directory found at ${BUILDX_CACHE_NEW_DIR}; skipping cache rotation."
+      #     fi
 
-      - name: Push image
-        if: github.event_name == 'push'
-        run: |
-          docker push "${IMAGE_NAME}"
+      # - name: Push image
+      #   if: github.event_name == 'push'
+      #   run: |
+      #     docker push "${IMAGE_NAME}"
 
-      - name: Prepare CD env file
-        if: github.event_name == 'push'
-        env:
-          ENV_DEVELOPMENT: ${{ secrets.ENV_DEVELOPMENT }}
-        run: |
-          if [ ! -f .env.development ]; then
-            if [ -z "${ENV_DEVELOPMENT}" ]; then
-              echo "Missing .env.development. Add repository secret ENV_DEVELOPMENT with the file content."
-              exit 1
-            fi
-            printf '%s\n' "${ENV_DEVELOPMENT}" > .env.development
-          fi
+      # - name: Prepare CD env file
+      #   if: github.event_name == 'push'
+      #   env:
+      #     ENV_DEVELOPMENT: ${{ secrets.ENV_DEVELOPMENT }}
+      #   run: |
+      #     if [ ! -f .env.development ]; then
+      #       if [ -z "${ENV_DEVELOPMENT}" ]; then
+      #         echo "Missing .env.development. Add repository secret ENV_DEVELOPMENT with the file content."
+      #         exit 1
+      #       fi
+      #       printf '%s\n' "${ENV_DEVELOPMENT}" > .env.development
+      #     fi
 
-      - name: CD
-        if: github.event_name == 'push'
-        run: |
-          bash deploy_helm.sh ./cd "www.ydphoto.com" "${REPO_NAME}" "${TAG}" "${CD_ENVIRONMENT}" .env.development
+      # - name: CD
+      #   if: github.event_name == 'push'
+      #   run: |
+      #     bash deploy_helm.sh ./cd "www.ydphoto.com" "${REPO_NAME}" "${TAG}" "${CD_ENVIRONMENT}" .env.development
 
-      - name: Cleanup Docker images
-        run: |
-          docker rmi -f "${IMAGE_NAME}" || true
+      # - name: Cleanup Docker images
+      #   run: |
+      #     docker rmi -f "${IMAGE_NAME}" || true
