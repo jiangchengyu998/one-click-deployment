@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/Sidebar';
 import AdminHeader from '@/components/admin/Header';
 
@@ -10,6 +10,7 @@ export default function AdminLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [checkingLogin, setCheckingLogin] = useState(true);
     const pathname = usePathname();
+    const router = useRouter();
     const isLoginPage = pathname === '/admin/login';
 
     useEffect(() => {
@@ -27,11 +28,11 @@ export default function AdminLayout({ children }) {
                 const data = await response.json();
 
                 if (!response.ok || !data.isLoggedIn) {
-                    window.location.replace('/admin/login');
+                    router.replace('/admin/login');
                     return;
                 }
             } catch (error) {
-                window.location.replace('/admin/login');
+                router.replace('/admin/login');
                 return;
             }
 
@@ -39,7 +40,7 @@ export default function AdminLayout({ children }) {
         };
 
         checkLogin();
-    }, [isLoginPage]);
+    }, [isLoginPage, router]);
 
     if (isLoginPage) {
         return children;

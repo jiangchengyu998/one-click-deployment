@@ -17,7 +17,7 @@
 - JWT 登录态，用户与管理员分别使用 `user-token` 和 `admin-token` cookie。
 - `bcryptjs` 用于密码哈希。
 - `nodemailer` 用于注册验证邮件和部署状态邮件。
-- 原生 `fetch` 调用 Jenkins、日志服务等外部系统。
+- 原生 `fetch` 调用 Jenkins 等外部系统；运行日志接口通过 Kubernetes API 读取 Pod 日志。
 
 ### 数据层
 
@@ -27,7 +27,6 @@
   - `Admin`：后台管理员。
   - `User`：平台用户、邮箱验证状态、配额。
   - `Api`：用户部署的 API 应用。
-  - `ApiInfor`：API 的部署节点、端口、服务器信息。
   - `Database`：用户创建的数据库实例记录。
 
 ### 部署与外部服务
@@ -39,9 +38,7 @@
   - `create_mysql_user`
   - `create_mysql_database`
   - `delete_mysql_database_and_user`
-  - `add_rr`
-  - `add_nginx_file`
-- Rsyslog 或日志服务通过 `RSYSLOG_URL` 提供运行日志。
+- 运行日志通过 Kubernetes Pod `log` API 提供，默认按应用 label 查询 Pod。
 - SMTP 邮件服务当前默认 163 邮箱。
 
 ## 2. 目录结构
@@ -69,12 +66,10 @@
 │   │   │   ├── apis/              # 用户 API 应用接口
 │   │   │   ├── auth/              # 用户认证接口
 │   │   │   ├── databases/         # 用户数据库实例接口
-│   │   │   ├── users/             # 用户资料/仪表盘接口
-│   │   │   └── api_infor/         # 部署信息接口
+│   │   │   └── users/             # 用户资料/仪表盘接口
 │   │   ├── auth/                  # 登录/注册页面
 │   │   ├── dashboard/             # 用户控制台页面
 │   │   ├── docs/                  # 文档页面
-│   │   ├── pricing/               # 定价页
 │   │   ├── globals.css
 │   │   ├── layout.tsx
 │   │   └── page.tsx
@@ -91,9 +86,7 @@
 │   │   ├── db_password_utils.js   # 数据库密码加解密工具
 │   │   ├── email.js               # 邮件发送
 │   │   └── utils.js               # 通用工具
-│   ├── middleware.js              # 页面路由保护
-│   └── saas/
-│       └── api/api.js             # SaaS 模式 DNS/Nginx Jenkins 调用
+│   └── middleware.js              # 页面路由保护
 └── test.js
 ```
 
@@ -120,7 +113,6 @@
 - 从 deps 阶段复制 `node_modules`。
 - 通过 build args 设置构建期公开变量，默认值为：
   - `NEXT_PUBLIC_MAIN_DOMAIN="ydphoto.com"`
-  - `NEXT_PUBLIC_MODE="opensource"`
 - 复制源码。
 - 执行：
   - `pnpm exec prisma generate`
@@ -150,15 +142,13 @@
 - `JWT_SECRET`
 - `NEXTAUTH_URL`
 - `NEXT_PUBLIC_MAIN_DOMAIN`
-- `NEXT_PUBLIC_MODE`
-- `SERVER_IP`
 - `JENKINS_URL`
 - `JENKINS_USER`
 - `JENKINS_TOKEN`
 - `SMTP_USER`
 - `SMTP_PASSWORD`
 - `SMTP_FROM`
-- `RSYSLOG_URL`
+- `K8S_LOG_NAMESPACE`
 
 ## 4. 重复代码
 
@@ -209,7 +199,6 @@ const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64
 - `src/app/api/admin/apis/[id]/redeploy/route.js`
 - `src/app/api/databases/route.js`
 - `src/app/api/databases/[id]/route.js`
-- `src/saas/api/api.js`
 
 可以抽象为：
 
@@ -229,26 +218,15 @@ const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64
 - 查询 API。
 - 更新状态为 `BUILDING`。
 - 设置 30 分钟超时。
-- 查询用户和部署信息。
+- 查询用户和部署配置。
 - 拼接 `deploy_api` Jenkins 参数。
 - 调用 Jenkins。
 
 差异主要是权限范围，核心部署动作可沉到服务层。
 
-### 4.4 ApiInfor 管理逻辑重复
+### 4.4 部署参数组装逻辑重复
 
-`ApiInfor` 的创建、查询、更新、删除分散在：
-
-- `src/app/api/admin/apis/[id]/api-infors/route.js`
-- `src/app/api/admin/api-infors/[id]/route.js`
-- `src/app/api/api_infor/route.js`
-
-重复点：
-
-- 必填字段校验。
-- `serverPort` 转换。
-- `ApiInfor` 是否存在校验。
-- 错误码处理。
+用户和管理员的重新部署接口都会拼接 Jenkins 参数、更新状态、设置超时检查。核心部署动作可沉到服务层，减少重复逻辑。
 
 ### 4.5 前端页面 fetch 与状态处理重复
 
@@ -311,12 +289,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key'
 
 ### 5.3 部分管理员接口调用 `getAdminSession()` 时未传 request
 
-`getAdminSession(request)` 依赖 `request.cookies`，但以下文件中存在不传 `request` 的调用：
-
-- `src/app/api/admin/api-infors/[id]/route.js`
-- `src/app/api/admin/apis/[id]/api-infors/route.js`
-
-由于 `getAdminSession` 内部 catch 后返回 null，这会导致这些接口始终未授权，而不是暴露明确错误。
+`getAdminSession(request)` 依赖 `request.cookies`。新增管理员接口时需要显式传入 `request`，否则会在 catch 后返回 null，表现为接口始终未授权。
 
 ### 5.4 `src/lib/utils.js` 使用未导入的 `prisma`
 
@@ -347,33 +320,19 @@ API 部署和数据库创建中使用 `setTimeout` 更新状态：
 创建 API 的流程大致是：
 
 1. 写入 `Api`。
-2. 写入 `ApiInfor`。
-3. 调用 Jenkins。
-4. 更新状态为 `BUILDING`。
+2. 调用 Jenkins。
+3. 更新状态为 `BUILDING`。
 
-如果 Jenkins 调用失败，数据库中已经有了 `Api` 和 `ApiInfor` 记录，但状态可能仍是 `PENDING`。数据库创建流程也类似：先写记录，再异步调用 Jenkins。缺少补偿或事务状态机。
+如果 Jenkins 调用失败，数据库中已经有了 `Api` 记录，但状态可能仍是 `PENDING`。数据库创建流程也类似：先写记录，再异步调用 Jenkins。缺少补偿或事务状态机。
 
-### 5.7 端口分配存在并发冲突
-
-`src/app/api/apis/route.js` 通过查询当前最大 `serverPort` 再 `+1` 分配端口：
-
-```js
-const maxPortRecord = await prisma.apiInfor.findFirst({
-  orderBy: { serverPort: 'desc' },
-});
-const nextPort = maxPortRecord ? maxPortRecord.serverPort + 1 : 4000;
-```
-
-并发创建 API 时可能分配到相同端口。`schema.prisma` 中也没有对 `serverIp + serverPort` 建唯一约束。
-
-### 5.8 敏感信息处理不完整
+### 5.7 敏感信息处理不完整
 
 - `Api.gitToken` 以明文字符串存储。
 - `Database.password` 当前使用 bcrypt 哈希，但数据库创建时仍需要原始密码调用 Jenkins；这说明展示/重试/恢复能力会受限。
 - `db_password_utils.js` 提供 AES 加解密，但使用固定 IV，且密钥长度校验被注释，当前没有被数据库创建流程使用。
 - `next.config.ts` 把 `JENKINS_URL` 和 `JENKINS_TOKEN` 放入 `env` 配置。Next 的 `env` 会被内联到构建产物中，敏感 token 不建议通过该方式暴露。
 
-### 5.9 输入校验较弱
+### 5.8 输入校验较弱
 
 接口多数只检查是否为空，缺少更严格的格式校验：
 
@@ -382,9 +341,8 @@ const nextPort = maxPortRecord ? maxPortRecord.serverPort + 1 : 4000;
 - branch 名称。
 - 环境变量结构。
 - 数据库名、用户名是否满足 MySQL 命名规则。
-- `serverPort` 范围与数字合法性。
 
-### 5.10 Middleware 只保护页面，不保护 API
+### 5.9 Middleware 只保护页面，不保护 API
 
 `src/middleware.js` 的 matcher 只包含：
 
@@ -396,7 +354,7 @@ API 权限依赖每个 route handler 自己调用 session 校验。当前虽然�
 
 另外 `publicPaths` 里包含 `/apis/*/webhook`，但 matcher 不匹配 `/api/**`，且字符串 `startsWith('/apis/*/webhook')` 也不会匹配真实动态路径。
 
-### 5.11 JS/TS 混用导致类型保护有限
+### 5.10 JS/TS 混用导致类型保护有限
 
 项目开启 `strict: true`，但大量核心后端和页面仍是 `.js`：
 
@@ -406,11 +364,11 @@ API 权限依赖每个 route handler 自己调用 session 校验。当前虽然�
 
 这会降低 Prisma 类型、请求体结构、环境变量和状态枚举的静态检查收益。
 
-### 5.12 日志与调试输出较多
+### 5.11 日志与调试输出较多
 
-多个接口中存在 `console.log` 调试输出，包含 Jenkins 响应、API 信息、端口信息等。生产环境建议接入结构化日志，并避免输出 token、Git 地址、部署细节等敏感信息。
+多个接口中存在 `console.log` 调试输出，包含 Jenkins 响应、API 信息等。生产环境建议接入结构化日志，并避免输出 token、Git 地址、部署细节等敏感信息。
 
-### 5.13 缺少测试与质量门禁
+### 5.12 缺少测试与质量门禁
 
 `package.json` 中没有：
 
@@ -422,15 +380,9 @@ API 权限依赖每个 route handler 自己调用 session 校验。当前虽然�
 
 仓库里存在 `test.js`，但没有脚本挂载。当前很难在 CI 中快速发现构建、类型、路由和 Prisma schema 问题。
 
-### 5.14 部分功能标记为模拟或 TODO
+### 5.13 部分功能标记为模拟或 TODO
 
-示例：
-
-- `src/saas/api/api.js` 中 `createDnsRecord` 日志写着 simulated，但实际调用 Jenkins。
-- `createNginxConfig` 主体被大段注释，当前直接 `return true`。
-- `src/app/api/admin/api-infors/[id]/route.js` 更新部署信息后注释 `todo`，没有同步修改外部部署配置。
-
-这些会造成 UI 显示的配置与真实运行环境不一致。
+这类代码会造成 UI 显示的配置与真实运行环境不一致，后续应集中梳理并补齐真实实现。
 
 ## 运行架构概览
 
@@ -443,10 +395,10 @@ flowchart LR
   ApiRoutes --> Prisma["Prisma Client"]
   Prisma --> MySQL["MySQL"]
   ApiRoutes --> Jenkins["Jenkins Pipelines"]
-  Jenkins --> Runtime["部署节点 / Docker / Nginx / DNS"]
+  Jenkins --> Runtime["部署节点 / Docker / Kubernetes"]
   Jenkins --> Webhook["部署回调 /api/apis/[id]/webhook"]
   Webhook --> Prisma
-  ApiRoutes --> Rsyslog["日志服务 RSYSLOG_URL"]
+  ApiRoutes --> K8sLogs["Kubernetes Pod Logs"]
   ApiRoutes --> SMTP["SMTP 邮件服务"]
 ```
 
@@ -465,11 +417,9 @@ flowchart LR
 1. 用户提交 API 名称、Git 地址、Git token、环境变量。
 2. 后端校验用户配额和同名 API。
 3. 创建 `Api` 记录。
-4. 分配端口并创建 `ApiInfor`。
-5. SaaS 模式下调用 DNS/Nginx 相关 Jenkins job。
-6. 调用 Jenkins `deploy_api`。
-7. 更新 API 状态为 `BUILDING`。
-8. Jenkins 回调 webhook 更新最终状态和 jobId。
+4. 调用 Jenkins `deploy_api`。
+5. 更新 API 状态为 `BUILDING`。
+7. Jenkins 回调 webhook 更新最终状态和 jobId。
 
 ### 创建数据库实例
 
@@ -486,7 +436,6 @@ flowchart LR
 2. 新增 `src/lib/route-helpers.js`，统一 session 校验、错误响应和异常包装。
 3. 将部署流程从 route handler 中移到 service 层，例如 `src/services/api-deploy-service.js`。
 4. 用 webhook、任务队列或定时任务替代进程内 `setTimeout`。
-5. 为 `ApiInfor.serverIp + serverPort` 增加唯一约束或引入端口分配表。
-6. 统一 JS/TS，优先迁移 `src/lib` 和 `src/app/api`。
-7. 补齐 `lint`、`typecheck`、`test`、`db:migrate`、`db:seed` 脚本。
+5. 统一 JS/TS，优先迁移 `src/lib` 和 `src/app/api`。
+6. 补齐 `lint`、`typecheck`、`test`、`db:migrate`、`db:seed` 脚本。
 8. 继续收敛运行时环境变量，避免在 Next 构建产物中内联服务端敏感配置。

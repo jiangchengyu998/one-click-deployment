@@ -4,6 +4,9 @@ import { verifyPassword } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { generateToken } from '@/lib/auth';
 
+const INVALID_LOGIN_ERROR = '用户名或密码错误';
+const DUMMY_PASSWORD_HASH = '$2b$12$91bp9.BpwP5nfXB7yTjx2em4fCQYTRxuCKsy31l.cp5nGvXFVWrl2';
+
 export async function POST(request) {
     try {
         const { username, password } = await request.json();
@@ -20,19 +23,13 @@ export async function POST(request) {
             where: { username }
         });
 
-        if (!admin) {
-            return NextResponse.json(
-                { error: '管理员账户不存在' },
-                { status: 401 }
-            );
-        }
-
         // 验证密码
-        const isValidPassword = await verifyPassword(password, admin.password);
+        const passwordHash = admin?.password || DUMMY_PASSWORD_HASH;
+        const isValidPassword = await verifyPassword(password, passwordHash);
 
-        if (!isValidPassword) {
+        if (!admin || !isValidPassword) {
             return NextResponse.json(
-                { error: '密码错误' },
+                { error: INVALID_LOGIN_ERROR },
                 { status: 401 }
             );
         }

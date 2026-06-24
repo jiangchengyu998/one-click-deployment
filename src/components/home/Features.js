@@ -1,64 +1,43 @@
 "use client";
 import Link from 'next/link';
+import { useI18n } from '@/components/i18n/LanguageProvider';
 
 export default function Features() {
-    const outlineButton = 'inline-flex cursor-pointer items-center justify-center rounded-lg border border-[#4a6ee0] px-4 py-2 text-sm font-medium text-[#4a6ee0] transition duration-300 hover:-translate-y-0.5 hover:bg-[#f5f7ff] hover:shadow-[0_4px_12px_rgba(0,0,0,0.1)]'
-    const features = [
-        {
-            icon: 'fas fa-database',
-            title: '数据库管理',
-            description: '创建实例、生成账号、查看连接信息都在一个页面完成。',
-            href: '/docs/create-db-instance',
-        },
-        {
-            icon: 'fas fa-code',
-            title: 'Git 自动部署',
-            description: '填写仓库地址和分支，平台负责构建、发布和状态更新。',
-            href: '/docs/first-deployment',
-        },
-        {
-            icon: 'fas fa-link',
-            title: '域名访问',
-            description: '部署完成后自动分配三级域名，方便演示和调用。',
-            href: '/docs/first-deployment',
-        },
-        {
-            icon: 'fas fa-terminal',
-            title: '日志排查',
-            description: '部署日志和运行日志集中查看，问题定位更直接。',
-            href: '/docs/first-deployment',
-        },
-        {
-            icon: 'fas fa-key',
-            title: '凭据管理',
-            description: '数据库主机、账号和密码清晰展示，复制即可使用。',
-            href: '/docs/create-db-instance',
-        },
-        {
-            icon: 'fas fa-book-open',
-            title: '上手文档',
-            description: '从注册、创建数据库到首次部署都有步骤说明。',
-            href: '/docs',
-        },
-    ]
+    const { t } = useI18n();
+    const outlineButton = 'inline-flex cursor-pointer items-center justify-center rounded-md text-sm font-semibold text-[#4a6ee0] transition hover:text-[#3f5fd0]'
+    const features = t('home.features.items')
 
     return (
-        <section id="features" className="bg-[#f8f9fa] py-20 max-md:py-16">
+        <section id="features" className="bg-[#f8f9fa] py-12 max-md:py-10">
             <div className="mx-auto w-full max-w-[1400px] px-5 max-md:px-4">
-                <div className="mb-[60px] text-center">
-                    <span className="mb-3 inline-block rounded-full bg-white px-4 py-2 text-sm font-medium text-[#4a6ee0] shadow-sm ring-1 ring-gray-200">功能覆盖</span>
-                    <h2 className="mb-4 text-4xl font-bold text-[#333] max-md:text-3xl">从创建资源到上线访问，都少一步</h2>
-                    <p className="mx-auto max-w-2xl text-lg text-[#666] max-md:text-base">围绕个人开发者和小团队的常见部署流程设计，保留必要控制，去掉重复配置。</p>
+                <div className="mb-8 flex items-end justify-between gap-8 max-lg:flex-col max-lg:items-start">
+                    <div className="max-w-2xl">
+                        <span className="mb-3 inline-flex items-center rounded-full border border-[#dfe5ff] bg-white px-4 py-2 text-sm font-medium text-[#4a6ee0] shadow-sm">
+                            <i className="fas fa-layer-group mr-2"></i>{t('home.features.badge')}
+                        </span>
+                        <h2 className="mb-4 text-4xl font-bold text-[#1d2939] max-md:text-3xl">{t('home.features.title')}</h2>
+                        <p className="text-lg leading-8 text-[#667085] max-md:text-base">{t('home.features.description')}</p>
+                    </div>
+                    <Link href="/docs" className="inline-flex shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-[#344054] transition hover:-translate-y-0.5 hover:border-[#4a6ee0] hover:text-[#4a6ee0] hover:shadow-[0_8px_18px_rgba(36,45,84,0.1)]">
+                        {t('home.features.docs')} <i className="fas fa-arrow-right ml-2 text-xs"></i>
+                    </Link>
                 </div>
-                <div className="grid grid-cols-3 gap-8 max-lg:grid-cols-2 max-md:grid-cols-1">
+                <div className="grid grid-cols-3 gap-5 max-lg:grid-cols-2 max-md:grid-cols-1">
                     {features.map((feature, index) => (
-                        <div key={index} className="rounded-lg bg-white p-7 text-left shadow-[0_4px_12px_rgba(0,0,0,0.08)] ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(36,45,84,0.12)]">
-                            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-gradient-to-br from-[#4a6ee0] to-[#7b68ee]">
-                                <i className={`${feature.icon} text-xl text-white`}></i>
+                        <div key={index} className="group flex min-h-[220px] flex-col rounded-lg border border-gray-200 bg-white p-6 text-left shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-[#dfe5ff] hover:shadow-[0_12px_28px_rgba(36,45,84,0.12)]">
+                            <div className="mb-5 flex items-start justify-between gap-4">
+                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#eef3ff] text-[#4a6ee0] ring-1 ring-[#dfe5ff]">
+                                    <i className={`${feature.icon} text-lg`}></i>
+                                </span>
+                                <span className="rounded-full bg-[#f6f8fb] px-3 py-1 text-xs font-semibold text-[#667085] ring-1 ring-gray-200">
+                                    {feature.label}
+                                </span>
                             </div>
-                            <h3 className="mb-4 text-[22px] font-semibold">{feature.title}</h3>
-                            <p className="mb-5 min-h-[52px] leading-relaxed text-[#666]">{feature.description}</p>
-                            <Link href={feature.href} className={outlineButton}>了解更多</Link>
+                            <h3 className="mb-3 text-xl font-semibold text-[#1d2939]">{feature.title}</h3>
+                            <p className="mb-5 flex-1 leading-7 text-[#667085]">{feature.description}</p>
+                            <Link href={feature.href} className={outlineButton}>
+                                {t('home.features.learnMore')} <i className="fas fa-arrow-right ml-2 text-xs transition group-hover:translate-x-0.5"></i>
+                            </Link>
                         </div>
                     ))}
                 </div>

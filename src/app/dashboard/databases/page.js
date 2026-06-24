@@ -126,6 +126,15 @@ export default function UserDatabases() {
         }
     };
 
+    const copyToClipboard = async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            alert('已复制到剪贴板');
+        } catch (error) {
+            alert('复制失败，请手动复制');
+        }
+    };
+
     // 处理输入变化
     const handleInputChange = (field, value) => {
         // 移除用户可能输入的前缀
@@ -154,6 +163,7 @@ export default function UserDatabases() {
             <div className="mb-6 flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">我的数据库</h1>
+                    <p className="mt-1 text-gray-600">这里管理平台默认数据库。已有阿里云 RDS 或自建 MySQL 时，也可以在部署应用时填入自己的连接参数。</p>
                     <div className="flex items-center gap-4 mt-2">
                         <p className="text-gray-600">
                             配额: {userQuota.currentDbs}/{userQuota.dbQuota}
@@ -165,13 +175,18 @@ export default function UserDatabases() {
                         )}
                     </div>
                 </div>
-                <button
-                    onClick={() => setShowCreateModal(true)}
-                    disabled={!hasQuota}
-                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center transition-colors"
-                >
-                    <i className="fas fa-plus mr-2"></i> 创建数据库
-                </button>
+                {hasQuota ? (
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 flex items-center transition-colors"
+                    >
+                        <i className="fas fa-plus mr-2"></i> 新增数据库
+                    </button>
+                ) : (
+                    <div className="rounded-md bg-gray-100 px-3 py-2 text-sm text-gray-600">
+                        数据库配额已用完
+                    </div>
+                )}
             </div>
 
             {/* 数据库列表 */}
@@ -197,10 +212,28 @@ export default function UserDatabases() {
                                     <div className="text-sm">
                                         <span className="font-medium text-gray-700">主机:</span>
                                         <span className="text-gray-600 ml-1 font-mono">{db.host}</span>
+                                        <button
+                                            onClick={() => copyToClipboard(db.host)}
+                                            className="ml-2 text-blue-600 hover:text-blue-800"
+                                            title="复制主机"
+                                        >
+                                            <i className="fas fa-copy"></i>
+                                        </button>
                                     </div>
                                     <div className="text-sm">
                                         <span className="font-medium text-gray-700">用户名:</span>
                                         <span className="text-gray-600 ml-1 font-mono">{db.username}</span>
+                                        <button
+                                            onClick={() => copyToClipboard(db.username)}
+                                            className="ml-2 text-blue-600 hover:text-blue-800"
+                                            title="复制用户名"
+                                        >
+                                            <i className="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                    <div className="text-sm">
+                                        <span className="font-medium text-gray-700">密码:</span>
+                                        <span className="text-gray-600 ml-1">同注册登录密码</span>
                                     </div>
                                     <div className="text-sm text-gray-500">
                                         创建时间: {new Date(db.createdAt).toLocaleDateString('zh-CN')}
@@ -230,13 +263,13 @@ export default function UserDatabases() {
             {databases.length === 0 && (
                 <div className="text-center py-12">
                     <i className="fas fa-database text-gray-300 text-4xl mb-3"></i>
-                    <p className="text-gray-500">您还没有创建任何数据库</p>
+                    <p className="text-gray-500">默认数据库正在自动创建，请稍后刷新查看。</p>
                     {hasQuota && (
                         <button
                             onClick={() => setShowCreateModal(true)}
                             className="mt-2 text-green-600 hover:text-green-800 font-medium"
                         >
-                            创建第一个数据库
+                            手动新增数据库
                         </button>
                     )}
                 </div>
@@ -247,7 +280,8 @@ export default function UserDatabases() {
                 <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-start justify-center p-4">
                     <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mt-20">
                         <div className="p-6">
-                            <h3 className="text-lg font-medium text-gray-900 mb-4">创建新数据库</h3>
+                            <h3 className="text-lg font-medium text-gray-900 mb-1">新增数据库</h3>
+                            <p className="mb-4 text-sm text-gray-500">默认数据库已随注册创建，这里仅用于额外配额。</p>
                             <form onSubmit={createDatabase}>
                                 <div className="space-y-4">
                                     {/* 数据库名称 */}
@@ -269,6 +303,7 @@ export default function UserDatabases() {
                                                 className="flex-1 min-w-0 block w-full px-3 py-2 border border-gray-300 rounded-r-md focus:ring-green-500 focus:border-green-500"
                                                 placeholder="my_database"
                                                 pattern="[a-zA-Z0-9_]+"
+                                                maxLength={64}
                                                 title="只能包含字母、数字和下划线"
                                             />
                                         </div>
@@ -298,6 +333,7 @@ export default function UserDatabases() {
                                                 className="flex-1 min-w-0 block w-full px-3 py-2 border border-gray-300 rounded-r-md focus:ring-green-500 focus:border-green-500"
                                                 placeholder="db_user"
                                                 pattern="[a-zA-Z0-9_]+"
+                                                maxLength={32}
                                                 title="只能包含字母、数字和下划线"
                                             />
                                         </div>
@@ -311,7 +347,7 @@ export default function UserDatabases() {
                                     {/* 密码 */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            密码
+                                            数据库密码
                                         </label>
                                         <input
                                             type="password"

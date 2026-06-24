@@ -10,6 +10,16 @@ namespace: default
 
 replicaCount: 1
 
+serviceAccount:
+  create: false
+  name: ""
+  automountServiceAccountToken: true
+
+rbac:
+  logReader:
+    enabled: false
+    namespace: default
+
 image:
   repository: 192.168.50.18:5000/APP-NAME
   tag: "TAG"

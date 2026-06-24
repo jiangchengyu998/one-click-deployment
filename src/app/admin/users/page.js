@@ -4,10 +4,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import { fetchAdminJson, getAdminCachedData } from '@/lib/adminDataCache';
 
 export default function AdminUsers() {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const cachedUsers = getAdminCachedData('admin:users');
+    const [users, setUsers] = useState(cachedUsers || []);
+    const [loading, setLoading] = useState(!cachedUsers);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingUser, setEditingUser] = useState(null);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -16,22 +18,27 @@ export default function AdminUsers() {
     const router = useRouter();
 
     useEffect(() => {
-        fetchUsers();
+        fetchUsers({ quiet: !!cachedUsers });
     }, []);
 
-    const fetchUsers = async () => {
+    const fetchUsers = async ({ quiet = false } = {}) => {
+        if (!quiet) {
+            setLoading(true);
+        }
+
         try {
-            const response = await fetch('/api/admin/users');
-            if (response.ok) {
-                const data = await response.json();
-                setUsers(data);
-            } else if (response.status === 401) {
-                router.push('/admin/login');
-            }
+            const data = await fetchAdminJson('admin:users', '/api/admin/users', { force: quiet });
+            setUsers(data);
         } catch (error) {
+            if (error.status === 401) {
+                router.push('/admin/login');
+                return;
+            }
             console.error('获取用户列表失败:', error);
         } finally {
-            setLoading(false);
+            if (!quiet) {
+                setLoading(false);
+            }
         }
     };
 
@@ -46,7 +53,7 @@ export default function AdminUsers() {
             });
 
             if (response.ok) {
-                fetchUsers(); // 刷新列表
+                fetchUsers({ quiet: true }); // 刷新列表
                 setEditingUser(null);
                 // 如果正在查看该用户的详情，也更新详情数据
                 if (selectedUser && selectedUser.id === userId) {
@@ -69,7 +76,7 @@ export default function AdminUsers() {
             });
 
             if (response.ok) {
-                fetchUsers();
+                fetchUsers({ quiet: true });
                 // 如果正在查看被删除的用户，关闭详情弹窗
                 if (selectedUser && selectedUser.id === userId) {
                     setShowUserDetail(false);
@@ -84,9 +91,11 @@ export default function AdminUsers() {
     };
 
     const viewUserDetail = async (user) => {
+        setSelectedUser(user);
+        setShowUserDetail(true);
         setUserDetailLoading(true);
         try {
-            // 获取完整的用户详情，包括API和数据库信息
+            // 获取完整的用户详情，包括应用和数据库信息
             const response = await fetch(`/api/admin/users/${user.id}`);
             if (response.ok) {
                 const userDetail = await response.json();
@@ -95,17 +104,15 @@ export default function AdminUsers() {
                 // 如果详情接口不可用，使用基础信息
                 setSelectedUser(user);
             }
-            setShowUserDetail(true);
         } catch (error) {
             console.error('获取用户详情失败:', error);
             setSelectedUser(user); // 降级使用基础信息
-            setShowUserDetail(true);
         } finally {
             setUserDetailLoading(false);
         }
     };
 
-    // 获取API状态统计
+    // 获取应用状态统计
     const getApiStatusStats = (apis) => {
         const stats = {
             RUNNING: 0,
@@ -179,7 +186,7 @@ export default function AdminUsers() {
                             用户信息
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            API配额
+                            应用配额
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             数据库配额
@@ -194,20 +201,20 @@ export default function AdminUsers() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                     {filteredUsers.map((user) => (
-                        <tr key={user.id} className="hover:bg-gray-50">
+                        <tr
+                            key={user.id}
+                            className="group hover:bg-gray-50 cursor-pointer transition-colors"
+                            onClick={() => viewUserDetail(user)}
+                        >
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
-                                    <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center cursor-pointer"
-                                         onClick={() => viewUserDetail(user)}>
+                                    <div className="flex-shrink-0 h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
                                       <span className="text-white font-medium">
                                         {user.name.charAt(0).toUpperCase()}
                                       </span>
                                     </div>
                                     <div className="ml-4">
-                                        <div
-                                            className="text-sm font-medium text-gray-900 cursor-pointer hover:text-blue-600"
-                                            onClick={() => viewUserDetail(user)}
-                                        >
+                                        <div className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
                                             {user.name}
                                         </div>
                                         <div className="text-sm text-gray-500">{user.email}</div>
@@ -215,7 +222,10 @@ export default function AdminUsers() {
                                     </div>
                                 </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td
+                                className="px-6 py-4 whitespace-nowrap"
+                                onClick={(event) => event.stopPropagation()}
+                            >
                                 {editingUser === user.id ? (
                                     <input
                                         type="number"
@@ -233,7 +243,10 @@ export default function AdminUsers() {
                                     </span>
                                 )}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
+                            <td
+                                className="px-6 py-4 whitespace-nowrap"
+                                onClick={(event) => event.stopPropagation()}
+                            >
                                 {editingUser === user.id ? (
                                     <input
                                         type="number"
@@ -254,7 +267,10 @@ export default function AdminUsers() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {new Date(user.createdAt).toLocaleDateString('zh-CN')}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <td
+                                className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                                onClick={(event) => event.stopPropagation()}
+                            >
                                 <button
                                     onClick={() => viewUserDetail(user)}
                                     className="text-blue-600 hover:text-blue-900"
@@ -288,7 +304,7 @@ export default function AdminUsers() {
                     <div className="text-2xl font-bold text-gray-900">{users.length}</div>
                 </div>
                 <div className="bg-white p-4 rounded-lg shadow">
-                    <div className="text-sm text-gray-500">总API配额</div>
+                    <div className="text-sm text-gray-500">总应用配额</div>
                     <div className="text-2xl font-bold text-gray-900">
                         {users.reduce((sum, user) => sum + user.apiQuota, 0)}
                     </div>
@@ -370,7 +386,7 @@ export default function AdminUsers() {
                                         <h3 className="text-lg font-medium text-gray-900 mb-4">配额信息</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="text-sm font-medium text-gray-500">API调用配额</label>
+                                                <label className="text-sm font-medium text-gray-500">应用配额</label>
                                                 <div className="mt-1 flex items-center space-x-2">
                                                     {editingUser === selectedUser.id ? (
                                                         <input
@@ -429,10 +445,10 @@ export default function AdminUsers() {
                                     <div>
                                         <h3 className="text-lg font-medium text-gray-900 mb-4">使用统计</h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                            {/* API 统计 */}
+                                            {/* 应用统计 */}
                                             <div className="bg-blue-50 rounded-lg p-4">
                                                 <div className="flex items-center justify-between mb-2">
-                                                    <h4 className="text-sm font-medium text-blue-800">API 服务</h4>
+                                                    <h4 className="text-sm font-medium text-blue-800">应用服务</h4>
                                                     <span className="text-lg font-bold text-blue-600">
                                                         {selectedUser.apis?.length || 0}
                                                     </span>
@@ -505,10 +521,10 @@ export default function AdminUsers() {
                                         </div>
                                     </div>
 
-                                    {/* API 服务列表 */}
+                                    {/*应用服务列表 */}
                                     {selectedUser.apis && selectedUser.apis.length > 0 && (
                                         <div>
-                                            <h3 className="text-lg font-medium text-gray-900 mb-4">API 服务列表</h3>
+                                            <h3 className="text-lg font-medium text-gray-900 mb-4">应用服务列表</h3>
                                             <div className="bg-gray-50 rounded-lg p-4 max-h-60 overflow-y-auto">
                                                 <div className="space-y-3">
                                                     {selectedUser.apis.map((api) => (
@@ -536,16 +552,6 @@ export default function AdminUsers() {
                                                                 <div>
                                                                     <span className="font-medium">分支:</span> {api.branch || 'main'}
                                                                 </div>
-                                                                {api.serverIp && (
-                                                                    <div>
-                                                                        <span className="font-medium">服务器:</span> {api.serverIp}:{api.serverPort}
-                                                                    </div>
-                                                                )}
-                                                                {api.execNode && (
-                                                                    <div>
-                                                                        <span className="font-medium">执行节点:</span> {api.execNode}
-                                                                    </div>
-                                                                )}
                                                             </div>
                                                             <div className="mt-2 text-xs text-gray-500">
                                                                 创建时间: {new Date(api.createdAt).toLocaleString('zh-CN')}

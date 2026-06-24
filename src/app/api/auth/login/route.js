@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { verifyPassword, generateToken } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
+const INVALID_LOGIN_ERROR = '邮箱或密码错误';
+const DUMMY_PASSWORD_HASH = '$2b$12$91bp9.BpwP5nfXB7yTjx2em4fCQYTRxuCKsy31l.cp5nGvXFVWrl2';
+
 export async function POST(request) {
     try {
         const { email, password, rememberMe } = await request.json();
@@ -18,9 +21,12 @@ export async function POST(request) {
             where: { email },
         });
 
-        if (!user) {
+        // 验证密码
+        const passwordHash = user?.password || DUMMY_PASSWORD_HASH;
+        const isValidPassword = await verifyPassword(password, passwordHash);
+        if (!user || !isValidPassword) {
             return NextResponse.json(
-                { error: '用户不存在' },
+                { error: INVALID_LOGIN_ERROR },
                 { status: 401 }
             );
         }
@@ -33,20 +39,12 @@ export async function POST(request) {
             );
         }
 
-        // 验证密码
-        const isValidPassword = await verifyPassword(password, user.password);
-        if (!isValidPassword) {
-            return NextResponse.json(
-                { error: '密码错误' },
-                { status: 401 }
-            );
-        }
-
         // 生成JWT
         const token = generateToken({
             id: user.id,
             email: user.email,
             name: user.name,
+            code: user.code,
             role: 'user',
         });
 

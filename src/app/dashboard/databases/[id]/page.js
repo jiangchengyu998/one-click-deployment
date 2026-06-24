@@ -11,7 +11,6 @@ import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
 export default function DatabaseDetail() {
     const [database, setDatabase] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [showPassword, setShowPassword] = useState(false);
     const [actionLoading, setActionLoading] = useState(false);
     const router = useRouter();
     const params = useParams();
@@ -67,6 +66,15 @@ export default function DatabaseDetail() {
         }
     };
 
+    const copyToClipboard = async (text) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            alert('已复制到剪贴板');
+        } catch (error) {
+            alert('复制失败，请手动复制');
+        }
+    };
+
     if (loading) {
         return <LoadingSkeleton rows={1} itemClassName="h-64" showToolbar={false} />;
     }
@@ -85,6 +93,8 @@ export default function DatabaseDetail() {
         );
     }
 
+    const maskedConnectionUrl = `mysql://${database.username}:<登录密码>@${database.host}/${database.name}`;
+
     return (
         <div className="p-6">
             <div className="mb-6">
@@ -97,7 +107,7 @@ export default function DatabaseDetail() {
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-2xl font-bold text-gray-900">{database.name}</h1>
-                        <p className="text-gray-600">数据库详情信息</p>
+                        <p className="text-gray-600">注册后自动创建的 MySQL 数据库</p>
                     </div>
                     <button
                         onClick={deleteDatabase}
@@ -150,33 +160,21 @@ export default function DatabaseDetail() {
                             <span className="font-medium font-mono">{database.username}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-600">普通密码</span>
-                            <div className="flex items-center space-x-2">
-                <span className="font-medium font-mono">
-                  {showPassword ? database.password : '••••••••'}
-                </span>
+                            <span className="text-gray-600">数据库密码</span>
+                            <span className="font-medium text-gray-900">同注册登录密码</span>
+                        </div>
+                        <div className="flex justify-between items-start gap-4">
+                            <span className="text-gray-600">连接地址</span>
+                            <div className="text-right">
+                                <div className="font-medium font-mono text-sm break-all">{maskedConnectionUrl}</div>
                                 <button
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="text-gray-400 hover:text-gray-600"
+                                    onClick={() => copyToClipboard(maskedConnectionUrl)}
+                                    className="mt-1 text-sm text-blue-600 hover:text-blue-800"
                                 >
-                                    <i className={`fas ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                    <i className="fas fa-copy mr-1"></i>复制
                                 </button>
                             </div>
                         </div>
-                        {/*<div className="flex justify-between items-center">*/}
-                        {/*    <span className="text-gray-600">API密码</span>*/}
-                        {/*    <div className="flex items-center space-x-2">*/}
-                        {/*        <span className="font-medium font-mono">*/}
-                        {/*          {showApiPassword ? database.apiPassword : '••••••••'}*/}
-                        {/*        </span>*/}
-                        {/*        <button*/}
-                        {/*            onClick={() => setShowApiPassword(!showApiPassword)}*/}
-                        {/*            className="text-gray-400 hover:text-gray-600"*/}
-                        {/*        >*/}
-                        {/*            <i className={`fas ${showApiPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>*/}
-                        {/*        </button>*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
                     </div>
                 </div>
 
@@ -188,7 +186,7 @@ export default function DatabaseDetail() {
                             <span className="text-green-400"># MySQL 连接示例</span>
                         </div>
                         <div className="mb-1">
-                            <span className="text-blue-400">mysql</span> -h <span className="text-yellow-400">{database.host}</span> -u <span className="text-yellow-400">{database.username}</span> -p
+                            <span className="text-blue-400">mysql</span> -h <span className="text-yellow-400">{database.host}</span> -u <span className="text-yellow-400">{database.username}</span> -p <span className="text-yellow-400">{database.name}</span>
                         </div>
                         <div className="mb-2">
                             <span className="text-green-400"># Node.js 连接示例</span>
@@ -198,7 +196,7 @@ export default function DatabaseDetail() {
                             <div>const connection = mysql.createConnection(&#123;</div>
                             <div>  host: '<span className="text-yellow-400">{database.host}</span>',</div>
                             <div>  user: '<span className="text-yellow-400">{database.username}</span>',</div>
-                            <div>  password: '<span className="text-yellow-400">{showPassword ? database.password : 'YOUR_PASSWORD'}</span>',</div>
+                            <div>  password: process.env.DB_PASSWORD,</div>
                             <div>  database: '<span className="text-yellow-400">{database.name}</span>'</div>
                             <div>&#125;);</div>
                         </div>

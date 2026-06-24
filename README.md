@@ -11,14 +11,13 @@
 - 一键部署 API 应用：用户提交 Git 仓库、分支、环境变量后，由 Jenkins 触发 Docker 化部署。
 - 自动生成访问域名：默认格式为 `应用名-用户标识.主域名`，例如 `demo-hk.ydphoto.com`。
 - 数据库实例管理：支持为用户创建、查看和删除 MySQL 数据库实例。
-- 日志与状态查看：支持查看 Jenkins 构建日志、运行日志、部署节点和端口信息。
+- 日志与状态查看：支持查看 Jenkins 构建日志、Kubernetes Pod 运行日志和部署节点信息。
 - 邮箱验证与通知：注册后发送验证邮件，部署状态变化后可发送邮件提醒。
 - 用户控制台与管理员后台：用户管理自己的 API/数据库，管理员查看和维护全局资源。
-- SaaS/开源模式切换：通过 `NEXT_PUBLIC_MODE` 控制是否启用 SaaS 相关 DNS/Nginx 流程。
 
 ## 项目主要流程
 
-平台的核心思路是：Next.js 负责页面、接口、认证和资源记录；MySQL 保存用户、API、数据库和部署信息；Jenkins 负责真正的服务器侧创建、部署、删除动作；日志服务负责暴露运行日志。
+平台的核心思路是：Next.js 负责页面、接口、认证和资源记录；MySQL 保存用户、API、数据库和部署信息；Jenkins 负责真正的服务器侧创建、部署、删除动作；运行日志通过 Kubernetes API 读取对应 Pod 日志。
 
 ```mermaid
 flowchart LR
@@ -28,8 +27,8 @@ flowchart LR
     Web --> DB["MySQL + Prisma"]
     Web --> Jenkins["Jenkins Pipeline"]
     Jenkins --> Server["部署服务器 / Docker / K8s"]
-    Web --> LogService["日志服务"]
-    Server --> LogService
+    Server --> K8s["Kubernetes Pod"]
+    Web --> K8s
     Web --> Mail["SMTP 邮件通知"]
 ```
 
@@ -46,12 +45,11 @@ flowchart LR
 
 1. 用户进入 `/dashboard/apis` 创建 API，填写应用名称、Git 仓库地址、Git Token 和环境变量；分支字段当前模型默认值为 `main`，可在 API 详情页继续维护。
 2. 后端根据用户配额判断是否允许创建，并生成访问域名：`应用名-用户code.NEXT_PUBLIC_MAIN_DOMAIN`。
-3. 平台在 `apis` 表创建 API 记录，并在 `api_infor` 表分配执行节点、服务器 IP 和端口。
-4. 如果 `NEXT_PUBLIC_MODE=saas`，平台会先调用 Jenkins 的 `add_rr` 和 `add_nginx_file`，创建 DNS 解析和 Nginx 配置。
-5. 平台调用 Jenkins Job `deploy_api_by_k3s`，把 Git 地址、分支、端口、环境变量、API ID、回调地址等参数传给部署流水线。
-6. API 状态更新为 `BUILDING`；如果 30 分钟后仍未完成，会自动标记为 `ERROR`。
-7. Jenkins 完成部署后，平台通过回调或管理接口更新 API 状态、服务端口和运行信息。
-8. 用户可以在 API 详情页查看部署状态、Jenkins 构建日志和运行日志。
+3. 平台在 `apis` 表创建 API 记录。
+4. 平台调用 Jenkins Job `deploy_api_by_k3s`，把 Git 地址、分支、环境变量、API ID、回调地址等参数传给部署流水线。
+5. API 状态更新为 `BUILDING`；如果 30 分钟后仍未完成，会自动标记为 `ERROR`。
+6. Jenkins 完成部署后，平台通过回调或管理接口更新 API 状态和构建记录。
+7. 用户可以在 API 详情页查看部署状态、Jenkins 构建日志和运行日志。
 
 ```mermaid
 sequenceDiagram
@@ -63,12 +61,11 @@ sequenceDiagram
 
     U->>A: 创建 API
     A->>D: 检查配额并创建 API 记录
-    A->>D: 创建 api_infor，分配端口和节点
     A->>J: 触发 deploy_api_by_k3s
     J->>S: 拉取代码、构建镜像、启动服务
     A->>D: 标记状态为 BUILDING
     J-->>A: 回写部署结果
-    A->>D: 更新状态和部署信息
+    A->>D: 更新状态和构建记录
     U->>A: 查看状态和日志
 ```
 
@@ -84,8 +81,8 @@ sequenceDiagram
 ### 4. 日志查看流程
 
 1. 构建日志来自 Jenkins，接口会读取 `deploy_api_by_k3s` 对应构建号的 `consoleText`。
-2. 运行日志来自 `RSYSLOG_URL` 指向的日志服务，接口会读取 `${RSYSLOG_URL}/logs/{apiName}.log`。
-3. 前端在 API 详情页聚合展示构建日志、运行日志、部署节点、服务端口和当前状态。
+2. 运行日志来自 Kubernetes Pod 日志，接口会按 `app.kubernetes.io/name={apiName}` 查询 Pod 并读取 `/log`。
+3. 前端在 API 详情页聚合展示构建日志、运行日志、部署节点和当前状态。
 
 ### 5. 管理员维护流程
 
@@ -104,7 +101,7 @@ sequenceDiagram
 | 认证 | JWT、Cookie、bcryptjs |
 | 部署引擎 | Docker、Jenkins Pipeline |
 | 邮件 | Nodemailer、163 SMTP |
-| 日志 | Jenkins 日志、Rsyslog/自定义日志服务 |
+| 日志 | Jenkins 构建日志、Kubernetes Pod 运行日志 |
 
 ## 目录结构
 
@@ -126,8 +123,7 @@ sequenceDiagram
 │   │   └── page.tsx           # 官网首页
 │   ├── components/            # 页面和通用 UI 组件
 │   ├── lib/                   # 认证、数据库、邮件、加密等工具
-│   ├── middleware.js          # 用户端/管理端路由保护
-│   └── saas/                  # SaaS 模式下的 DNS/Nginx Jenkins 调用
+│   └── middleware.js          # 用户端/管理端路由保护
 └── public/                    # 静态资源
 ```
 
@@ -169,6 +165,7 @@ DATABASE_URL="mysql://root:password@localhost:3306/yunduo_db"
 # 登录态与数据库密码加密
 JWT_SECRET="replace-with-a-random-secret"
 SECRET_KEY="12345678901234567890123456789012"
+WEBHOOK_SECRET="replace-with-a-random-webhook-secret"
 
 # 当前平台访问地址
 NEXTAUTH_URL="http://localhost:3000"
@@ -183,13 +180,13 @@ SMTP_USER="your-email@163.com"
 SMTP_PASSWORD="your-email-smtp-auth-code"
 SMTP_FROM="your-email@163.com"
 
-# 日志服务
-RSYSLOG_URL="http://localhost:8081"
+# Kubernetes 运行日志
+K8S_LOG_NAMESPACE="default"
+K8S_API_HOST="kubernetes.default.svc"
+K8S_API_PORT="443"
 
-# 域名与部署模式
+# 域名
 NEXT_PUBLIC_MAIN_DOMAIN="example.com"
-NEXT_PUBLIC_MODE="opensource"
-SERVER_IP="127.0.0.1"
 ```
 
 关键变量说明：
@@ -199,14 +196,14 @@ SERVER_IP="127.0.0.1"
 | `DATABASE_URL` | Prisma 连接 MySQL 的地址。 |
 | `JWT_SECRET` | 用户和管理员登录态 JWT 签名密钥。 |
 | `SECRET_KEY` | 数据库密码 AES-256-CBC 加密密钥，需要 32 字节长度。 |
+| `WEBHOOK_SECRET` | Jenkins 部署回调鉴权密钥，平台触发部署时传给 Jenkins，Jenkins 回调时放入 `x-webhook-secret` 请求头。 |
 | `NEXTAUTH_URL` | 平台自身访问地址，用于邮件链接和 Jenkins 回调参数。 |
 | `JENKINS_URL` | Jenkins 服务地址。 |
 | `JENKINS_USER` / `JENKINS_TOKEN` | Jenkins Basic Auth 凭据。 |
 | `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM` | 注册验证邮件和部署通知邮件配置。 |
-| `RSYSLOG_URL` | 运行日志服务地址，接口会读取 `${RSYSLOG_URL}/logs/{apiName}.log`。 |
+| `K8S_LOG_NAMESPACE` | API 应用所在 Kubernetes namespace，不设置时会优先使用当前 Pod 的 namespace，最后回退到 `default`。 |
+| `K8S_API_HOST` / `K8S_API_PORT` | Kubernetes API Server 地址和端口。平台运行在集群内时可显式配置为 `kubernetes.default.svc:443`。 |
 | `NEXT_PUBLIC_MAIN_DOMAIN` | 用户 API 和数据库访问时展示/生成的主域名。 |
-| `NEXT_PUBLIC_MODE` | `opensource` 或 `saas`。`saas` 会额外触发 DNS、Nginx 等 Jenkins 任务。 |
-| `SERVER_IP` | 创建 API 部署信息时写入的默认服务器 IP。 |
 
 ### 4. 初始化数据库
 
@@ -250,8 +247,6 @@ pnpm dev
 | `create_mysql_user` | 创建 MySQL 用户。 |
 | `create_mysql_database` | 创建 MySQL 数据库。 |
 | `delete_mysql_database_and_user` | 删除数据库和用户。 |
-| `add_rr` | SaaS 模式下添加域名解析记录。 |
-| `add_nginx_file` | SaaS 模式下生成或更新 Nginx 配置。 |
 
 Jenkins 安装与 Pipeline 示例可参考：[Jenkins 安装配置指南](https://github.com/jiangchengyu998/jenkins-pipeline-shared/blob/master/README.md)
 
@@ -262,7 +257,6 @@ Jenkins 安装与 Pipeline 示例可参考：[Jenkins 安装配置指南](https:
 ```bash
 docker build \
   --build-arg NEXT_PUBLIC_MAIN_DOMAIN=example.com \
-  --build-arg NEXT_PUBLIC_MODE=opensource \
   --build-arg SERVER_PORT=3000 \
   -t one-click-deploy .
 ```
@@ -275,7 +269,21 @@ docker run --rm -p 3000:3000 \
   one-click-deploy
 ```
 
-> 生产环境请确保 MySQL、Jenkins、日志服务和 SMTP 都可以从容器内访问。
+> 生产环境请确保 MySQL、Jenkins 和 SMTP 都可以从容器内访问；运行日志依赖平台 Pod 的 ServiceAccount 能读取目标 namespace 的 Pod 和 Pod 日志。
+
+平台 Helm 部署需要为运行日志开启 ServiceAccount 和日志读取 RBAC：
+
+```yaml
+serviceAccount:
+  create: true
+  name: one-click-deploy
+  automountServiceAccountToken: true
+
+rbac:
+  logReader:
+    enabled: true
+    namespace: default
+```
 
 ## 常用命令
 
@@ -304,8 +312,7 @@ pnpm exec prisma db seed
 - `SECRET_KEY` 必须是 32 字节字符串，否则数据库密码加解密会失败。
 - 注册流程依赖 SMTP，邮件配置不可用时用户创建会回滚。
 - 真实 API 部署、删除、数据库创建等操作依赖 Jenkins Job，只有前端页面启动并不代表部署链路已完整可用。
-- `NEXT_PUBLIC_MODE=saas` 会触发额外的域名解析和 Nginx 配置流程，开源自部署场景建议先使用 `opensource`。
-- `next.config.ts` 会把 `JENKINS_URL` 和 `JENKINS_TOKEN` 注入构建环境，生产环境请谨慎管理镜像和构建日志权限。
+- `JENKINS_URL`、`JENKINS_USER`、`JENKINS_TOKEN` 必须作为服务端运行时环境变量提供，不要通过 `next.config.ts` 的 `env` 配置注入构建产物。
 
 ## 更多文档
 

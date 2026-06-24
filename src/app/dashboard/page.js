@@ -5,8 +5,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import { useI18n } from '@/components/i18n/LanguageProvider';
 
 export default function UserDashboard() {
+    const { t } = useI18n();
     const [user, setUser] = useState(null);
     const [stats, setStats] = useState({
         apiCount: 0,
@@ -36,7 +38,7 @@ export default function UserDashboard() {
                 setStats(data.stats);
             }
         } catch (error) {
-            console.error('获取仪表板数据失败:', error);
+            console.error(t('dashboard.fetchFailed'), error);
         } finally {
             setLoading(false);
         }
@@ -56,8 +58,8 @@ export default function UserDashboard() {
     return (
         <div className="p-6">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900">欢迎回来, {user?.name}!</h1>
-                <p className="text-gray-600">您的个人控制台</p>
+                <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.welcome', { name: user?.name || '' })}</h1>
+                <p className="text-gray-600">{t('dashboard.personalConsole')}</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -69,7 +71,7 @@ export default function UserDashboard() {
                             </div>
                             <div className="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt className="text-sm font-medium text-gray-500 truncate">API服务</dt>
+                                    <dt className="text-sm font-medium text-gray-500 truncate">{t('dashboard.apiServices')}</dt>
                                     <dd className="text-lg font-medium text-gray-900">{stats.apiCount}/{user?.apiQuota}</dd>
                                 </dl>
                             </div>
@@ -79,7 +81,7 @@ export default function UserDashboard() {
                                 href="/dashboard/apis"
                                 className="text-sm font-medium text-blue-600 hover:text-blue-500"
                             >
-                                管理API服务
+                                {t('dashboard.manageApiServices')}
                             </Link>
                         </div>
                     </div>
@@ -93,7 +95,7 @@ export default function UserDashboard() {
                             </div>
                             <div className="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt className="text-sm font-medium text-gray-500 truncate">数据库</dt>
+                                    <dt className="text-sm font-medium text-gray-500 truncate">{t('dashboard.databases')}</dt>
                                     <dd className="text-lg font-medium text-gray-900">{stats.dbCount}/{user?.dbQuota}</dd>
                                 </dl>
                             </div>
@@ -103,7 +105,7 @@ export default function UserDashboard() {
                                 href="/dashboard/databases"
                                 className="text-sm font-medium text-green-600 hover:text-green-500"
                             >
-                                管理数据库
+                                {t('dashboard.manageDatabases')}
                             </Link>
                         </div>
                     </div>
@@ -117,14 +119,14 @@ export default function UserDashboard() {
                             </div>
                             <div className="ml-5 w-0 flex-1">
                                 <dl>
-                                    <dt className="text-sm font-medium text-gray-500 truncate">运行中服务</dt>
+                                    <dt className="text-sm font-medium text-gray-500 truncate">{t('dashboard.runningServices')}</dt>
                                     <dd className="text-lg font-medium text-gray-900">{stats.runningApis}</dd>
                                 </dl>
                             </div>
                         </div>
                         <div className="mt-4">
               <span className="text-sm font-medium text-gray-500">
-                正常运行
+                {t('dashboard.healthy')}
               </span>
                         </div>
                     </div>
@@ -133,19 +135,19 @@ export default function UserDashboard() {
 
             <div className="bg-white shadow rounded-lg">
                 <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">快速开始</h3>
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">{t('dashboard.quickStart')}</h3>
                     <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Link
                             href="/dashboard/apis"
                             className="flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                         >
-                            <i className="fas fa-code mr-2"></i> 部署新API
+                            <i className="fas fa-code mr-2"></i> {t('dashboard.deployNewApi')}
                         </Link>
                         <Link
                             href="/dashboard/databases"
                             className="flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700"
                         >
-                            <i className="fas fa-database mr-2"></i> 创建数据库
+                            <i className="fas fa-database mr-2"></i> {t('dashboard.viewDatabases')}
                         </Link>
                     </div>
                 </div>

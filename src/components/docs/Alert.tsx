@@ -6,8 +6,8 @@ export default function Alert({ type, text }: { type: "info" | "success" | "warn
         warning: "bg-yellow-50 border-yellow-500 text-yellow-800",
     };
     return (
-        <div className={`border-l-4 p-4 mb-6 ${styles[type]}`}>
-            <p>{text}</p>
+        <div className={`mb-6 rounded-r-md border-l-4 p-4 ${styles[type]}`}>
+            <p className="leading-7">{text}</p>
         </div>
     );
 }

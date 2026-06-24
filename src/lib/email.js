@@ -1,5 +1,18 @@
 // lib/email.js 或您放置邮件配置的文件
 import nodemailer from 'nodemailer';
+import { createLogger } from '@/lib/logger';
+
+const logger = createLogger('email');
+
+function maskEmail(email) {
+    if (!email || !email.includes('@')) {
+        return email;
+    }
+
+    const [name, domain] = email.split('@');
+    const visible = name.slice(0, 2);
+    return `${visible}${'*'.repeat(Math.max(name.length - visible.length, 1))}@${domain}`;
+}
 
 // 创建Nodemailer传输器
 const transporter = nodemailer.createTransport({
@@ -46,13 +59,58 @@ export async function sendVerificationEmail(email, verificationToken, name) {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('验证邮件发送结果:', {
+    logger.info('email.verification.sent', {
+        recipient: maskEmail(email),
         messageId: info.messageId,
         accepted: info.accepted,
         rejected: info.rejected,
         response: info.response,
     });
 }
+
+export async function sendPasswordResetEmail(email, resetToken, name) {
+    const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${resetToken}`;
+
+    const mailOptions = {
+        from: `"云朵平台" <${process.env.SMTP_FROM}>`,
+        to: email,
+        subject: '重置您的密码 - 云朵平台',
+        html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">重置云朵平台密码</h2>
+        <p>尊敬的 ${name}，</p>
+        <p>我们收到了您的密码重置请求。请点击下面的按钮设置新密码：</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${resetUrl}"
+             style="background-color: #2563eb; color: white; padding: 12px 24px;
+                    text-decoration: none; border-radius: 6px; display: inline-block;">
+            重置密码
+          </a>
+        </div>
+        <p>如果按钮无法点击，请复制以下链接到浏览器地址栏：</p>
+        <p style="word-break: break-all; color: #666;">
+          ${resetUrl}
+        </p>
+        <p>此链接将在1小时内有效，且只能使用一次。</p>
+        <p>如果您没有申请重置密码，请忽略此邮件，您的密码不会被修改。</p>
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
+        <p style="color: #6b7280; font-size: 14px;">
+          云朵平台
+        </p>
+      </div>
+    `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    logger.info('email.password_reset.sent', {
+        recipient: maskEmail(email),
+        messageId: info.messageId,
+        accepted: info.accepted,
+        rejected: info.rejected,
+        response: info.response,
+    });
+}
+
 export async function sendDeployInfoEmail(email, status, apiName,apiId) {
 
     const mailOptions = {
@@ -130,7 +188,11 @@ export async function sendDeployInfoEmail(email, status, apiName,apiId) {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('部署通知邮件发送结果:', {
+    logger.info('email.deploy_status.sent', {
+        recipient: maskEmail(email),
+        apiId,
+        apiName,
+        status,
         messageId: info.messageId,
         accepted: info.accepted,
         rejected: info.rejected,

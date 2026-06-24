@@ -21,8 +21,7 @@ export async function GET(request) {
                         email: true,
                         code: true
                     }
-                },
-                api_infor: true
+                }
             },
             orderBy: { createdAt: 'desc' }
         });

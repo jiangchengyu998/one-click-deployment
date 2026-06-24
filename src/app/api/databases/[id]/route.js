@@ -2,10 +2,14 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import {decryptPassword} from "@/lib/db_password_utils";
+import { databaseWithUserSafeSelect } from '@/lib/databaseProvisioning';
+import { createLogger, getJenkinsConfigState, getRequestContext } from '@/lib/logger';
+
+const logger = createLogger('api.databases.detail');
 
 // 获取数据库详情
 export async function GET(request, { params }) {
+    const requestLogger = logger.child(getRequestContext(request));
     try {
         const session = await getUserSession(request);
 
@@ -14,34 +18,27 @@ export async function GET(request, { params }) {
         }
 
         const { id } = await params;
+        const databaseLogger = requestLogger.child({
+            databaseId: id,
+            userId: session.id,
+        });
 
-        const database = await prisma.database.findUnique({
-            where: { id: id },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        code: true
-                    }
-                }
-            }
+        const database = await prisma.database.findFirst({
+            where: {
+                id: id,
+                userId: session.id,
+            },
+            select: databaseWithUserSafeSelect
         });
 
         if (!database) {
+            databaseLogger.warn('database.detail.not_found_or_forbidden');
             return NextResponse.json({ error: '数据库不存在' }, { status: 404 });
         }
 
-        // 检查权限
-        if (database.userId !== session.id) {
-            return NextResponse.json({ error: '无权访问此数据库' }, { status: 403 });
-        }
-
-        // database.password = decryptPassword(database.password); // 不返回密码字段
         return NextResponse.json(database);
     } catch (error) {
-        console.error('获取数据库详情错误:', error);
+        requestLogger.error('database.detail.failed', { error });
         return NextResponse.json(
             { error: '服务器错误' },
             { status: 500 }
@@ -51,6 +48,7 @@ export async function GET(request, { params }) {
 
 // 删除数据库
 export async function DELETE(request, { params }) {
+    const requestLogger = logger.child(getRequestContext(request));
     try {
         const session = await getUserSession(request);
 
@@ -59,30 +57,41 @@ export async function DELETE(request, { params }) {
         }
 
         const { id } = await params;
+        const databaseLogger = requestLogger.child({
+            databaseId: id,
+            userId: session.id,
+        });
 
 
         // 检查数据库是否存在
-        const database = await prisma.database.findUnique({
-            where: { id: id }
+        const database = await prisma.database.findFirst({
+            where: {
+                id: id,
+                userId: session.id,
+            }
         });
 
         if (!database) {
+            databaseLogger.warn('database.delete.not_found_or_forbidden');
             return NextResponse.json({ error: '数据库不存在' }, { status: 404 });
-        }
-
-        // 检查权限
-        if (database.userId !== session.id) {
-            return NextResponse.json({ error: '无权删除此数据库' }, { status: 403 });
         }
 
         // 删除数据库
         await prisma.database.delete({
             where: { id: id }
         });
+        databaseLogger.info('database.delete.record_deleted', {
+            databaseName: database.name,
+            username: database.username,
+        });
 
         const pipelineUrl = process.env.JENKINS_URL;
         const jenkinsUser = process.env.JENKINS_USER;
         const jenkinsToken = process.env.JENKINS_TOKEN;
+        if (!pipelineUrl || !jenkinsUser || !jenkinsToken) {
+            databaseLogger.error('database.delete.jenkins_config_missing', getJenkinsConfigState());
+            throw new Error('Jenkins配置不完整');
+        }
         const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
 
         // 1. 调用http://192.168.101.51:8080/job/delete_mysql_database_and_user/ pipeline 删除数据库和用户
@@ -104,14 +113,22 @@ export async function DELETE(request, { params }) {
         );
 
         if (response.status === 201 || response.status === 200) {
-            console.log('调用Jenkins删除数据库和用户成功');
+            databaseLogger.info('database.delete.jenkins_triggered', {
+                jobName: 'delete_mysql_database_and_user',
+                jenkinsStatus: response.status,
+                jenkinsStatusText: response.statusText,
+            });
         } else {
-            console.error('调用Jenkins删除数据库和用户失败:', response.status, response.statusText);
+            databaseLogger.error('database.delete.jenkins_trigger_failed', {
+                jobName: 'delete_mysql_database_and_user',
+                jenkinsStatus: response.status,
+                jenkinsStatusText: response.statusText,
+            });
         }
 
         return NextResponse.json({ message: '数据库删除成功' });
     } catch (error) {
-        console.error('删除数据库错误:', error);
+        requestLogger.error('database.delete.failed', { error });
         return NextResponse.json(
             { error: '服务器错误' },
             { status: 500 }

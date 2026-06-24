@@ -1,9 +1,12 @@
 "use client";
 
 import { useId } from 'react';
+import { useI18n } from '@/components/i18n/LanguageProvider';
 
-export default function Logo({ className = "h-8 w-8", markClassName = "", showWordmark = false, wordmark = "云朵一键部署平台" }) {
+export default function Logo({ className = "h-8 w-8", markClassName = "", showWordmark = false, wordmark }) {
     const gradientId = useId();
+    const { t } = useI18n();
+    const resolvedWordmark = wordmark || t('common.brand');
 
     return (
         <span className={`inline-flex items-center gap-2 ${markClassName}`}>
@@ -11,7 +14,7 @@ export default function Logo({ className = "h-8 w-8", markClassName = "", showWo
                 className={className}
                 viewBox="0 0 64 64"
                 role="img"
-                aria-label="云朵平台"
+                aria-label={t('common.shortBrand')}
                 xmlns="http://www.w3.org/2000/svg"
             >
                 <defs>
@@ -37,7 +40,7 @@ export default function Logo({ className = "h-8 w-8", markClassName = "", showWo
             </svg>
             {showWordmark && (
                 <span className="font-semibold leading-none">
-                    {wordmark}
+                    {resolvedWordmark}
                 </span>
             )}
         </span>

@@ -51,12 +51,12 @@ export default function DocLayout({
     }, [steps]);
 
     return (
-        <div className="min-h-screen bg-gray-50 py-10">
-            <div className="container mx-auto px-4 max-w-5xl">
+        <div className="min-h-screen bg-gray-50 py-12 max-md:py-6">
+            <div className="mx-auto w-full max-w-[1160px] px-5 max-md:px-4">
                 <DocHeader title={title} subtitle={subtitle} />
-                <div className="flex flex-col md:flex-row gap-10">
+                <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
                     <DocSidebar steps={steps} activeId={activeId} />
-                    <main className="flex-1">
+                    <main className="min-w-0 flex-1">
                         {children}
                         <DocFooterNav prev={prev} next={next} />
                     </main>

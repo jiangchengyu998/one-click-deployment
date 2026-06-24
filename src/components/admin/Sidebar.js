@@ -2,18 +2,19 @@
 "use client";
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import Logo from '@/components/Logo'
 
 const navigation = [
     { name: '仪表板', href: '/admin', icon: 'fas fa-tachometer-alt' },
     { name: '用户管理', href: '/admin/users', icon: 'fas fa-users' },
-    { name: 'API管理', href: '/admin/apis', icon: 'fas fa-code' },
+    { name: '应用管理', href: '/admin/apis', icon: 'fas fa-code' },
     { name: '数据库管理', href: '/admin/databases', icon: 'fas fa-database' },
 ]
 
 export default function AdminSidebar({ open, setOpen }) {
     const pathname = usePathname()
+    const router = useRouter()
 
     return (
         <>
@@ -43,12 +44,20 @@ export default function AdminSidebar({ open, setOpen }) {
                             <Link
                                 key={item.name}
                                 href={item.href}
+                                prefetch
+                                aria-current={isActive ? 'page' : undefined}
                                 className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                                     isActive
                                         ? 'bg-gray-900 text-white'
                                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                                 }`}
-                                onClick={() => setOpen(false)}
+                                onMouseEnter={() => router.prefetch(item.href)}
+                                onClick={(event) => {
+                                    if (isActive) {
+                                        event.preventDefault()
+                                    }
+                                    setOpen(false)
+                                }}
                             >
                                 <i className={`${item.icon} mr-3 flex-shrink-0 h-6 w-6`}></i>
                                 {item.name}

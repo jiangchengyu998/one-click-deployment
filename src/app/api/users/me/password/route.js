@@ -35,7 +35,7 @@ export async function PATCH(request) {
         });
 
         if (!user) {
-            return NextResponse.json({ error: '用户不存在' }, { status: 404 });
+            return NextResponse.json({ error: '未授权' }, { status: 401 });
         }
 
         // 验证当前密码

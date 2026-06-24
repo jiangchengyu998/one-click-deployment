@@ -2,9 +2,15 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
-import {createDnsRecord, createNginxConfig} from "@/saas/api/api";
+import { getJenkinsDeployNode } from '@/lib/deployConfig';
+import { createLogger, getJenkinsConfigState, getRequestContext } from '@/lib/logger';
+import { getRequiredWebhookSecret, getWebhookSecretConfigState } from '@/lib/webhookAuth';
+
+const logger = createLogger('api.apis');
+const API_NAME_PATTERN = /^[a-z]+$/;
 
 export async function GET(request) {
+    const requestLogger = logger.child(getRequestContext(request));
     try {
         const session = await getUserSession(request);
 
@@ -19,7 +25,7 @@ export async function GET(request) {
 
         return NextResponse.json(apis);
     } catch (error) {
-        console.error('获取API列表错误:', error);
+        requestLogger.error('api.list.failed', { error });
         return NextResponse.json(
             { error: '服务器错误' },
             { status: 500 }
@@ -28,6 +34,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+    const requestLogger = logger.child(getRequestContext(request));
     try {
         const session = await getUserSession(request);
 
@@ -37,6 +44,20 @@ export async function POST(request) {
 
         // 解析请求体, 添加envs
         const { name, gitUrl, gitToken, envs } = await request.json();
+        const deployLogger = requestLogger.child({
+            userId: session.id,
+            apiName: name,
+        });
+
+        if (!API_NAME_PATTERN.test(name || '')) {
+            deployLogger.warn('api.create.invalid_name', {
+                rule: 'lowercase_letters_only',
+            });
+            return NextResponse.json(
+                { error: '应用名称只能包含小写英文字母' },
+                { status: 400 }
+            );
+        }
 
         // 检查用户配额
         const user = await prisma.user.findUnique({
@@ -45,6 +66,10 @@ export async function POST(request) {
         });
 
         if (user._count.apis >= user.apiQuota) {
+            deployLogger.warn('api.create.quota_exceeded', {
+                currentApiCount: user._count.apis,
+                apiQuota: user.apiQuota,
+            });
             return NextResponse.json(
                 { error: '已达到API配额限制' },
                 { status: 400 }
@@ -63,6 +88,9 @@ export async function POST(request) {
         });
 
         if (existingApi) {
+            deployLogger.warn('api.create.duplicate_name', {
+                existingApiId: existingApi.id,
+            });
             return NextResponse.json(
                 { error: '已存在相同名称的API' },
                 { status: 400 }
@@ -80,65 +108,62 @@ export async function POST(request) {
                 userId: session.id,
             },
         });
+        const apiLogger = deployLogger.child({
+            apiId: api.id,
+            domain,
+        });
+        apiLogger.info('api.create.record_created', {
+            hasGitToken: !!gitToken,
+            envCount: Array.isArray(envs) ? envs.length : Object.keys(envs || {}).length,
+        });
 
         // 30分钟后如果状态还在BUILDING，自动改为ERROR，防止卡死
         setTimeout(async () => {
-            // 重新获取api状态，防止覆盖掉已经变更的状态
-            const currentApi = await prisma.api.findUnique({
-                where: { id: api.id }
-            });
-
-            // 如果currentApi不存在，则直接返回
-            if (!currentApi) {
-                console.log('API记录不存在，ID:', api.id);
-                return;
-            }
-
-            if (currentApi.status === 'BUILDING') {
-                console.log('API部署超时，自动设置为ERROR状态，API ID:', currentApi.id);
-                await prisma.api.update({
-                    where: { id: currentApi.id },
-                    data: { status: 'ERROR' }
+            try {
+                // 重新获取api状态，防止覆盖掉已经变更的状态
+                const currentApi = await prisma.api.findUnique({
+                    where: { id: api.id }
                 });
-            }
 
+                // 如果currentApi不存在，则直接返回
+                if (!currentApi) {
+                    apiLogger.warn('api.deploy.timeout_check.missing_api');
+                    return;
+                }
+
+                if (currentApi.status === 'BUILDING') {
+                    apiLogger.warn('api.deploy.timeout', {
+                        previousStatus: currentApi.status,
+                        nextStatus: 'ERROR',
+                        timeoutMinutes: 30,
+                    });
+                    await prisma.api.update({
+                        where: { id: currentApi.id },
+                        data: { status: 'ERROR' }
+                    });
+                }
+            } catch (error) {
+                apiLogger.error('api.deploy.timeout_check.failed', { error });
+            }
         }, 30*60*1000);
 
-        // serverPort 获取所有api_infor记录 中最大的 port + 1，简单实现如下
-        const maxPortRecord = await prisma.apiInfor.findFirst({
-            orderBy: { serverPort: 'desc' },
-        });
-        const nextPort = maxPortRecord ? maxPortRecord.serverPort + 1 : 4000;
-
-        console.log('Next available port:', nextPort);
-
-        // 创建api_infor记录, execNode 先写死为 w-ubuntu,后续可以让用户选择, 返回值
-        const apiInfor = await prisma.apiInfor.create({
-            data: {
-                apiId: api.id,
-                serverIp: process.env.SERVER_IP, // 默认值，可根据实际需求调整
-                serverPort: nextPort,
-                execNode: 'w-ubuntu',
-            }
-        });
+        const deployNode = getJenkinsDeployNode();
+        apiLogger.info('api.deploy.node_selected', { deployNode });
 
         const pipelineUrl = process.env.JENKINS_URL;
         const jenkinsUser = process.env.JENKINS_USER;
         const jenkinsToken = process.env.JENKINS_TOKEN;
+        if (!pipelineUrl || !jenkinsUser || !jenkinsToken) {
+            apiLogger.error('api.deploy.jenkins_config_missing', getJenkinsConfigState());
+            throw new Error('Jenkins配置不完整');
+        }
+        const webhookSecret = getRequiredWebhookSecret();
         const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
 
-        if (process.env.NEXT_PUBLIC_MODE === 'saas') {
-            await createDnsRecord(api, user, apiInfor)
-            await createNginxConfig(api, apiInfor, user)
-
-        }
-
-        // 调用 http://192.168.101.51:8080/job/deploy_api_by_k3s/  部署服务
-        // 构建参数字符串
-        const queryDeployApi = new URLSearchParams({
+        // 构建参数
+        const deployParams = new URLSearchParams({
             GIT_URL: api.gitUrl,
-            API_PORT: nextPort,
-            exe_node: apiInfor.execNode,
+            exe_node: deployNode,
             branch: api.branch,
             api_id: api.id,
             gitToken: api.gitToken || '',
@@ -146,23 +171,34 @@ export async function POST(request) {
             envs: JSON.stringify(api.envs),
             api_name: api.name + '-' +  user.code,
             CALL_BACK_HOST: process.env.NEXTAUTH_URL || '',
-        }).toString();
+            WEBHOOK_SECRET: webhookSecret,
+        });
 
         const responseDeployApi = await fetch(
-            `${pipelineUrl}/job/deploy_api_by_k3s/buildWithParameters?${queryDeployApi}`,
+            `${pipelineUrl}/job/deploy_api_by_k3s/buildWithParameters`,
             {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Basic ${basicAuth}`
-                }
+                    'Authorization': `Basic ${basicAuth}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: deployParams,
             }
         );
 
 
         if (responseDeployApi.status === 201) {
-            console.log('Jenkins部署服务成功:', responseDeployApi);
+            apiLogger.info('api.deploy.jenkins_triggered', {
+                jobName: 'deploy_api_by_k3s',
+                jenkinsStatus: responseDeployApi.status,
+                jenkinsStatusText: responseDeployApi.statusText,
+            });
         } else {
-            console.error('调用Jenkins部署服务失败:', responseDeployApi.status, responseDeployApi.statusText);
+            apiLogger.error('api.deploy.jenkins_trigger_failed', {
+                jobName: 'deploy_api_by_k3s',
+                jenkinsStatus: responseDeployApi.status,
+                jenkinsStatusText: responseDeployApi.statusText,
+            });
             throw new Error('调用Jenkins部署服务失败');
         }
 
@@ -171,10 +207,16 @@ export async function POST(request) {
             where: { id: api.id },
             data: { status: 'BUILDING' }
         });
+        apiLogger.info('api.deploy.status_updated', {
+            status: 'BUILDING',
+        });
 
         return NextResponse.json(api, { status: 201 });
     } catch (error) {
-        console.error('创建API错误:', error);
+        requestLogger.error('api.create.failed', {
+            error,
+            ...getWebhookSecretConfigState(),
+        });
         return NextResponse.json(
             { error: '服务器错误' },
             { status: 500 }

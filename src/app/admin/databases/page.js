@@ -5,56 +5,66 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '@/components/ui/StatusBadge';
 import LoadingSkeleton from '@/components/ui/LoadingSkeleton';
+import { fetchAdminJson, getAdminCachedData } from '@/lib/adminDataCache';
 
 export default function AdminDatabases() {
-    const [databases, setDatabases] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const cachedDatabases = getAdminCachedData('admin:databases');
+    const [databases, setDatabases] = useState(cachedDatabases || []);
+    const [loading, setLoading] = useState(!cachedDatabases);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [showDetailModal, setShowDetailModal] = useState(null);
-    const [actionLoading, setActionLoading] = useState(false);
+    const [actionLoading, setActionLoading] = useState(null);
     const router = useRouter();
 
     useEffect(() => {
-        fetchDatabases();
+        fetchDatabases({ quiet: !!cachedDatabases });
     }, []);
 
-    const fetchDatabases = async () => {
+    const fetchDatabases = async ({ quiet = false } = {}) => {
+        if (!quiet) {
+            setLoading(true);
+        }
+
         try {
-            const response = await fetch('/api/admin/databases');
-            if (response.ok) {
-                const data = await response.json();
-                setDatabases(data);
-            } else if (response.status === 401) {
-                router.push('/admin/login');
-            }
+            const data = await fetchAdminJson('admin:databases', '/api/admin/databases', { force: quiet });
+            setDatabases(data);
         } catch (error) {
+            if (error.status === 401) {
+                router.push('/admin/login');
+                return;
+            }
             console.error('获取数据库列表失败:', error);
         } finally {
-            setLoading(false);
+            if (!quiet) {
+                setLoading(false);
+            }
         }
     };
 
     const deleteDatabase = async (databaseId) => {
         if (!confirm('确定要删除这个数据库吗？此操作不可恢复！')) return;
 
+        setActionLoading(`delete:${databaseId}`);
         try {
             const response = await fetch(`/api/admin/databases/${databaseId}`, {
                 method: 'DELETE',
             });
 
             if (response.ok) {
-                fetchDatabases();
+                fetchDatabases({ quiet: true });
             } else {
                 alert('删除失败');
             }
         } catch (error) {
             alert('网络错误，请重试');
+        } finally {
+            setActionLoading(null);
         }
     };
 
     const restartDatabase = async (databaseId) => {
-        setActionLoading(true);
+        setActionLoading(`restart:${databaseId}`);
 
         try {
             const response = await fetch(`/api/admin/databases/${databaseId}/restart`, {
@@ -63,7 +73,7 @@ export default function AdminDatabases() {
 
             if (response.ok) {
                 alert('数据库重启命令已发送');
-                fetchDatabases(); // 刷新状态
+                fetchDatabases({ quiet: true }); // 刷新状态
             } else {
                 const data = await response.json();
                 alert(data.error || '重启失败');
@@ -71,13 +81,18 @@ export default function AdminDatabases() {
         } catch (error) {
             alert('网络错误，请重试');
         } finally {
-            setActionLoading(false);
+            setActionLoading(null);
         }
     };
 
     const filteredDatabases = databases.filter(db => {
-        const matchesSearch = db.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            db.user.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const keyword = searchTerm.toLowerCase();
+        const matchesSearch = db.name.toLowerCase().includes(keyword) ||
+            db.username.toLowerCase().includes(keyword) ||
+            db.host.toLowerCase().includes(keyword) ||
+            db.user.name.toLowerCase().includes(keyword) ||
+            db.user.email.toLowerCase().includes(keyword) ||
+            db.user.code.toLowerCase().includes(keyword);
         const matchesStatus = filterStatus === 'all' || db.status === filterStatus;
         return matchesSearch && matchesStatus;
     });
@@ -107,7 +122,7 @@ export default function AdminDatabases() {
                         <div className="relative flex-1">
                             <input
                                 type="text"
-                                placeholder="搜索数据库（名称、用户名）"
+                                placeholder="搜索数据库、用户、邮箱、代码或主机"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -159,7 +174,11 @@ export default function AdminDatabases() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                     {filteredDatabases.map((db) => (
-                        <tr key={db.id} className="hover:bg-gray-50">
+                        <tr
+                            key={db.id}
+                            className="hover:bg-gray-50 cursor-pointer transition-colors"
+                            onClick={() => setShowDetailModal(db)}
+                        >
                             <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="flex items-center">
                                     <div className="flex-shrink-0 h-10 w-10 bg-green-500 rounded-full flex items-center justify-center">
@@ -186,7 +205,10 @@ export default function AdminDatabases() {
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {new Date(db.createdAt).toLocaleDateString('zh-CN')}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <td
+                                className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2"
+                                onClick={(event) => event.stopPropagation()}
+                            >
                                 <button
                                     onClick={() => setShowDetailModal(db)}
                                     className="text-blue-600 hover:text-blue-900"
@@ -197,19 +219,20 @@ export default function AdminDatabases() {
                                 {db.status === 'RUNNING' && (
                                     <button
                                         onClick={() => restartDatabase(db.id)}
-                                        disabled={actionLoading}
-                                        className="text-yellow-600 hover:text-yellow-900"
+                                        disabled={!!actionLoading}
+                                        className="text-yellow-600 hover:text-yellow-900 disabled:opacity-50"
                                         title="重启数据库"
                                     >
-                                        <i className="fas fa-redo"></i>
+                                        <i className={`fas ${actionLoading === `restart:${db.id}` ? 'fa-spinner fa-spin' : 'fa-redo'}`}></i>
                                     </button>
                                 )}
                                 <button
                                     onClick={() => deleteDatabase(db.id)}
-                                    className="text-red-600 hover:text-red-900"
+                                    disabled={!!actionLoading}
+                                    className="text-red-600 hover:text-red-900 disabled:opacity-50"
                                     title="删除数据库"
                                 >
-                                    <i className="fas fa-trash"></i>
+                                    <i className={`fas ${actionLoading === `delete:${db.id}` ? 'fa-spinner fa-spin' : 'fa-trash'}`}></i>
                                 </button>
                             </td>
                         </tr>
@@ -279,12 +302,8 @@ export default function AdminDatabases() {
                                             <div className="font-medium">{showDetailModal.username}</div>
                                         </div>
                                         <div>
-                                            <span className="text-sm text-gray-500">普通密码:</span>
-                                            <div className="font-medium text-sm">••••••••</div>
-                                        </div>
-                                        <div>
-                                            <span className="text-sm text-gray-500">API密码:</span>
-                                            <div className="font-medium text-sm">••••••••</div>
+                                            <span className="text-sm text-gray-500">数据库密码:</span>
+                                            <div className="font-medium text-sm">同所属用户注册登录密码</div>
                                         </div>
                                     </div>
                                 </div>

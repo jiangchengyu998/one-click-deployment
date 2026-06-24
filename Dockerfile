@@ -25,10 +25,8 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
 FROM base AS builder
 
 ARG NEXT_PUBLIC_MAIN_DOMAIN="ydphoto.com"
-ARG NEXT_PUBLIC_MODE="opensource"
 
 ENV NEXT_PUBLIC_MAIN_DOMAIN=${NEXT_PUBLIC_MAIN_DOMAIN}
-ENV NEXT_PUBLIC_MODE=${NEXT_PUBLIC_MODE}
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

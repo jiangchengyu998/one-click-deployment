@@ -4,8 +4,10 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import { useI18n } from "@/components/i18n/LanguageProvider";
 
 function LoginForm({ router }) {
+    const { t } = useI18n();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [rememberMe, setRememberMe] = useState(false);
@@ -13,6 +15,7 @@ function LoginForm({ router }) {
     const [loading, setLoading] = useState(false);
     const searchParams = useSearchParams();
     const message = searchParams.get("message");
+    const queryError = searchParams.get("error");
 
     useEffect(() => {
         const checkLogin = async () => {
@@ -42,10 +45,10 @@ function LoginForm({ router }) {
             if (response.ok) {
                 router.push("/dashboard");
             } else {
-                setError(data.error || "登录失败，请检查邮箱和密码");
+                setError(data.error || t('auth.loginFailed'));
             }
         } catch (error) {
-            setError("网络错误，请重试");
+            setError(t('auth.networkRetry'));
         } finally {
             setLoading(false);
         }
@@ -56,15 +59,21 @@ function LoginForm({ router }) {
             <div className="max-w-md w-full space-y-8">
                 <div className="text-center">
                     <Logo className="mx-auto mb-4 h-16 w-16" />
-                    <h2 className="text-3xl font-extrabold text-gray-900">用户登录</h2>
+                    <h2 className="text-3xl font-extrabold text-gray-900">{t('auth.loginTitle')}</h2>
                     <p className="mt-2 text-sm text-gray-600">
-                        登录您的云朵平台账户
+                        {t('auth.loginSubtitle')}
                     </p>
                 </div>
 
                 {message && (
                     <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md">
                         {message}
+                    </div>
+                )}
+
+                {queryError && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md">
+                        {queryError}
                     </div>
                 )}
 
@@ -78,7 +87,7 @@ function LoginForm({ router }) {
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div>
                             <label htmlFor="email" className="sr-only">
-                                邮箱地址
+                                {t('auth.email')}
                             </label>
                             <input
                                 id="email"
@@ -87,14 +96,14 @@ function LoginForm({ router }) {
                                 autoComplete="username"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="邮箱地址"
+                                placeholder={t('auth.email')}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
                         <div>
                             <label htmlFor="password" className="sr-only">
-                                密码
+                                {t('auth.password')}
                             </label>
                             <input
                                 id="password"
@@ -103,7 +112,7 @@ function LoginForm({ router }) {
                                 autoComplete="current-password"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="密码"
+                                placeholder={t('auth.password')}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
@@ -124,17 +133,17 @@ function LoginForm({ router }) {
                                 htmlFor="remember-me"
                                 className="ml-2 block text-sm text-gray-900"
                             >
-                                记住我
+                                {t('auth.rememberMe')}
                             </label>
                         </div>
 
                         <div className="text-sm">
-                            <a
-                                href="#"
+                            <Link
+                                href="/auth/forgot-password"
                                 className="font-medium text-blue-600 hover:text-blue-500"
                             >
-                                忘记密码?
-                            </a>
+                                {t('auth.forgotPassword')}
+                            </Link>
                         </div>
                     </div>
 
@@ -144,18 +153,18 @@ function LoginForm({ router }) {
                             disabled={loading}
                             className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                         >
-                            {loading ? "登录中..." : "登录"}
+                            {loading ? t('auth.loggingIn') : t('auth.login')}
                         </button>
                     </div>
 
                     <div className="text-center">
                         <span className="text-sm text-gray-600">
-                            还没有账户?{" "}
+                            {t('auth.noAccount')}{" "}
                             <Link
                                 href="/auth/register"
                                 className="font-medium text-blue-600 hover:text-blue-500"
                             >
-                                立即注册
+                                {t('auth.registerNow')}
                             </Link>
                         </span>
                     </div>
@@ -167,8 +176,9 @@ function LoginForm({ router }) {
 
 export default function UserLogin() {
     const router = useRouter();
+    const { t } = useI18n();
     return (
-        <Suspense fallback={<div>加载中...</div>}>
+        <Suspense fallback={<div>{t('common.loading')}</div>}>
             <LoginForm router={router} />
         </Suspense>
     );

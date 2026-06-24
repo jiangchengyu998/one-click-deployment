@@ -5,17 +5,19 @@ import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
+import { useI18n } from '@/components/i18n/LanguageProvider';
 
 export default function DashboardLayout({ children }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const pathname = usePathname();
     const router = useRouter();
+    const { t } = useI18n();
 
     const navigation = [
-        { name: '概览', href: '/dashboard', icon: 'fas fa-tachometer-alt' },
-        { name: 'API服务', href: '/dashboard/apis', icon: 'fas fa-code' },
-        { name: '数据库', href: '/dashboard/databases', icon: 'fas fa-database' },
-        { name: '个人资料', href: '/dashboard/profile', icon: 'fas fa-user' },
+        { name: t('dashboard.overview'), href: '/dashboard', icon: 'fas fa-tachometer-alt' },
+        { name: t('dashboard.apiServices'), href: '/dashboard/apis', icon: 'fas fa-code' },
+        { name: t('dashboard.databases'), href: '/dashboard/databases', icon: 'fas fa-database' },
+        { name: t('dashboard.profile'), href: '/dashboard/profile', icon: 'fas fa-user' },
     ];
 
     const handleLogout = async () => {
@@ -23,7 +25,7 @@ export default function DashboardLayout({ children }) {
             await fetch('/api/auth/logout', { method: 'POST' });
             router.push('/auth/login');
         } catch (error) {
-            console.error('退出登录失败:', error);
+            console.error(t('dashboard.logoutFailed'), error);
         }
     };
 
@@ -45,22 +47,32 @@ export default function DashboardLayout({ children }) {
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
                 <div className="flex items-center justify-center h-16 px-4 bg-gray-900">
-                    <Logo showWordmark wordmark="用户控制台" className="h-9 w-9" markClassName="text-white text-xl" />
+                    <Logo showWordmark wordmark={t('common.dashboard')} className="h-9 w-9" markClassName="text-white text-xl" />
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
                     {navigation.map((item) => {
-                        const isActive = pathname === item.href;
+                        const isActive = pathname === item.href || (
+                            item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`)
+                        );
                         return (
                             <Link
                                 key={item.name}
                                 href={item.href}
+                                prefetch
+                                aria-current={isActive ? 'page' : undefined}
                                 className={`flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                                     isActive
                                         ? 'bg-gray-900 text-white'
                                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                                 }`}
-                                onClick={() => setSidebarOpen(false)}
+                                onMouseEnter={() => router.prefetch(item.href)}
+                                onClick={(event) => {
+                                    if (pathname === item.href) {
+                                        event.preventDefault();
+                                    }
+                                    setSidebarOpen(false);
+                                }}
                             >
                                 <i className={`${item.icon} mr-3 flex-shrink-0 h-6 w-6`}></i>
                                 {item.name}
@@ -78,7 +90,7 @@ export default function DashboardLayout({ children }) {
                         className="px-4 text-gray-400 border-r border-gray-200 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden"
                         onClick={() => setSidebarOpen(true)}
                     >
-                        <span className="sr-only">打开侧边栏</span>
+                        <span className="sr-only">{t('dashboard.openSidebar')}</span>
                         <i className="fas fa-bars w-6 h-6"></i>
                     </button>
 
@@ -88,15 +100,17 @@ export default function DashboardLayout({ children }) {
                                 <div className="flex items-center space-x-4">
                                     <Link
                                         href="/dashboard/profile"
+                                        prefetch
                                         className="text-sm text-gray-700 hover:text-gray-900"
+                                        onMouseEnter={() => router.prefetch('/dashboard/profile')}
                                     >
-                                        <i className="fas fa-user-circle mr-1"></i>个人资料
+                                        <i className="fas fa-user-circle mr-1"></i>{t('dashboard.profile')}
                                     </Link>
                                     <button
                                         onClick={handleLogout}
                                         className="text-sm text-gray-700 hover:text-gray-900"
                                     >
-                                        <i className="fas fa-sign-out-alt mr-1"></i>退出登录
+                                        <i className="fas fa-sign-out-alt mr-1"></i>{t('dashboard.logout')}
                                     </button>
                                 </div>
                             </div>

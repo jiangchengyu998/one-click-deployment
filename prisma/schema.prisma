@@ -31,6 +31,8 @@ model User {
   updatedAt         DateTime   @updatedAt
   isVerified        Boolean    @default(false)
   verificationToken String?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
   apis              Api[]
   databases         Database[]
 
@@ -50,25 +52,10 @@ model Api {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   branch    String?    @default("main")
-  api_infor ApiInfor[]
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "apis_userId_fkey")
   @@map("apis")
-}
-
-model ApiInfor {
-  id         String   @id @default(cuid())
-  apiId      String
-  createdAt  DateTime @default(now()) @db.DateTime(0)
-  execNode   String
-  serverIp   String
-  serverPort Int
-  updatedAt  DateTime @default(now()) @db.DateTime(0)
-  apis       Api      @relation(fields: [apiId], references: [id], onDelete: Cascade, map: "fk_api_id")
-
-  @@index([apiId], map: "fk_api_id")
-  @@map("api_infor")
 }
 
 model Database {

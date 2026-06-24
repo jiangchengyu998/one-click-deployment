@@ -26,23 +26,6 @@ export async function GET(request, { params }) {
             return NextResponse.json({ error: '用户不存在' }, { status: 404 });
         }
 
-        //通过apiid获取ApiInfor 的信息
-
-        const apiIds = user.apis.map(api => api.id);
-
-        const apiInfor = await prisma.apiInfor.findMany({
-            where: {
-                apiId: {
-                    in: apiIds
-                }
-            }
-        });
-
-        user.apis = user.apis.map(api => ({
-            ...api,
-            ...apiInfor.find(infor => infor.apiId === api.id)
-        }));
-
         return NextResponse.json(user);
     } catch (error) {
         console.error('获取用户详情错误:', error);

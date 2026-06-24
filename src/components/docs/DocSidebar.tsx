@@ -6,20 +6,25 @@ export default function DocSidebar({
     activeId: string;
 }) {
     return (
-        <aside className="md:w-64 bg-white rounded-lg shadow p-6 h-fit sticky top-20">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">内容导航</h2>
-            <ul className="space-y-3">
+        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm max-md:-mx-4 max-md:rounded-none max-md:border-x-0 max-md:p-4 max-md:shadow-none md:sticky md:top-20 md:w-64">
+            <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500 max-md:mb-3 max-md:tracking-normal">目录</h2>
+            <ul className="flex gap-2 overflow-x-auto pb-1 md:block md:space-y-2 md:overflow-visible md:pb-0">
                 {steps.map((s) => (
-                    <li key={s.id}>
+                    <li key={s.id} className="shrink-0 md:shrink">
                         <a
                             href={`#${s.id}`}
-                            className={`block px-3 py-2 rounded-md font-medium transition-colors duration-150 ${
+                            className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-medium leading-6 transition-colors duration-150 md:items-start md:gap-3 md:rounded-md md:py-2.5 ${
                                 activeId === s.id
-                                    ? "bg-blue-100 text-blue-700"
-                                    : "text-blue-600 hover:bg-blue-50 hover:text-blue-800"
+                                    ? "bg-blue-50 text-blue-700"
+                                    : "text-gray-700 hover:bg-gray-50 hover:text-blue-700"
                             }`}
                         >
-                            步骤{s.number}：{s.title}
+                            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs md:mt-0.5 ${
+                                activeId === s.id ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"
+                            }`}>
+                                {s.number}
+                            </span>
+                            <span className="whitespace-nowrap md:whitespace-normal">{s.title}</span>
                         </a>
                     </li>
                 ))}

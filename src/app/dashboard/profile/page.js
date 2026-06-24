@@ -18,7 +18,7 @@ export default function UserProfile() {
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
-    const [updating, setUpdating] = useState(false);
+    const [updating, setUpdating] = useState(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -52,7 +52,7 @@ export default function UserProfile() {
 
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
-        setUpdating(true);
+        setUpdating('profile');
         setError('');
         setMessage('');
 
@@ -77,25 +77,25 @@ export default function UserProfile() {
         } catch (error) {
             setError('网络错误，请重试');
         } finally {
-            setUpdating(false);
+            setUpdating(null);
         }
     };
 
     const handlePasswordUpdate = async (e) => {
         e.preventDefault();
-        setUpdating(true);
+        setUpdating('password');
         setError('');
         setMessage('');
 
         if (formData.newPassword !== formData.confirmPassword) {
             setError('新密码不匹配');
-            setUpdating(false);
+            setUpdating(null);
             return;
         }
 
         if (formData.newPassword.length < 6) {
             setError('新密码至少需要6位字符');
-            setUpdating(false);
+            setUpdating(null);
             return;
         }
 
@@ -126,7 +126,7 @@ export default function UserProfile() {
         } catch (error) {
             setError('网络错误，请重试');
         } finally {
-            setUpdating(false);
+            setUpdating(null);
         }
     };
 
@@ -254,10 +254,10 @@ export default function UserProfile() {
                             <div className="mt-6">
                                 <button
                                     type="submit"
-                                    disabled={updating}
+                                    disabled={!!updating}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                                 >
-                                    {updating ? '更新中...' : '更新个人信息'}
+                                    {updating === 'profile' ? '更新中...' : '更新个人信息'}
                                 </button>
                             </div>
                         </form>
@@ -311,10 +311,10 @@ export default function UserProfile() {
                             <div className="mt-6">
                                 <button
                                     type="submit"
-                                    disabled={updating}
+                                    disabled={!!updating}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                                 >
-                                    {updating ? '更新中...' : '更新密码'}
+                                    {updating === 'password' ? '更新中...' : '更新密码'}
                                 </button>
                             </div>
                         </form>
@@ -325,7 +325,7 @@ export default function UserProfile() {
                         <div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="bg-gray-50 p-4 rounded-lg">
-                                    <h3 className="text-lg font-medium text-gray-900 mb-2">API配额</h3>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-2">应用配额</h3>
                                     <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-blue-600">
                       {user?.apiQuota || 0}

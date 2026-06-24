@@ -77,6 +77,35 @@ sed -e "s|HOSTNAME|${h_escaped}|g" \
     -e "s|ENV_SECRET_NAME|${secret_escaped}|g" \
     "${chart_path}/values.yaml" > "${tmpfile}"
 
+if [ "${app_name}" = "one-click-deploy" ]; then
+  cat >> "${tmpfile}" <<EOF
+
+serviceAccount:
+  create: true
+  name: ${app_name}
+  automountServiceAccountToken: true
+
+rbac:
+  logReader:
+    enabled: true
+    namespace: default
+
+env:
+  - name: NODE_ENV
+    value: production
+  - name: PORT
+    value: "3000"
+  - name: APP_ENV
+    value: ${environment}
+  - name: K8S_LOG_NAMESPACE
+    value: default
+  - name: K8S_API_HOST
+    value: kubernetes.default.svc
+  - name: K8S_API_PORT
+    value: "443"
+EOF
+fi
+
 echo "Deploying ${app_name} with Helm values: ${tmpfile}"
 helm upgrade --install "${app_name}" "${chart_path}" \
   -f "${tmpfile}" \

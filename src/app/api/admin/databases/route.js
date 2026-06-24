@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { databaseWithUserSafeSelect } from '@/lib/databaseProvisioning';
 
 // 获取所有数据库（管理员）
 export async function GET(request) {
@@ -13,16 +14,7 @@ export async function GET(request) {
         }
 
         const databases = await prisma.database.findMany({
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                        code: true
-                    }
-                }
-            },
+            select: databaseWithUserSafeSelect,
             orderBy: { createdAt: 'desc' }
         });
 

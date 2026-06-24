@@ -5,8 +5,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
+import { useI18n } from '@/components/i18n/LanguageProvider';
 
 export default function Register() {
+    const { t } = useI18n();
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -31,13 +33,13 @@ export default function Register() {
 
         // 验证表单
         if (formData.password !== formData.confirmPassword) {
-            setError('密码不匹配');
+            setError(t('auth.passwordMismatch'));
             setLoading(false);
             return;
         }
 
         if (formData.password.length < 6) {
-            setError('密码至少需要6位字符');
+            setError(t('auth.passwordTooShort'));
             setLoading(false);
             return;
         }
@@ -60,14 +62,14 @@ export default function Register() {
             if (response.ok) {
                 // 注册成功，显示提示信息
                 setError(''); // 清空错误
-                alert('注册成功！请检查您的邮箱并点击验证链接完成注册。');
+                alert(data.message || t('auth.registerSuccessMessage'));
                 // 可以跳转到登录页或显示成功信息
-                router.push('/auth/login?message=注册成功，请检查邮箱完成验证');
+                router.push(`/auth/login?message=${encodeURIComponent(data.message || t('auth.registerSuccessMessage'))}`);
             } else {
-                setError(data.error || '注册失败');
+                setError(data.error || t('auth.registerFailed'));
             }
         } catch (error) {
-            setError('网络错误，请重试');
+            setError(t('auth.networkRetry'));
         } finally {
             setLoading(false);
         }
@@ -79,10 +81,10 @@ export default function Register() {
                 <div className="text-center">
                     <Logo className="mx-auto mb-4 h-16 w-16" />
                     <h2 className="text-3xl font-extrabold text-gray-900">
-                        注册账户
+                        {t('auth.registerTitle')}
                     </h2>
                     <p className="mt-2 text-sm text-gray-600">
-                        创建您的云朵平台账户
+                        {t('auth.registerSubtitle')}
                     </p>
                 </div>
 
@@ -95,7 +97,7 @@ export default function Register() {
 
                     <div className="rounded-md shadow-sm -space-y-px">
                         <div>
-                            <label htmlFor="name" className="sr-only">用户名</label>
+                            <label htmlFor="name" className="sr-only">{t('auth.username')}</label>
                             <input
                                 id="name"
                                 name="name"
@@ -103,13 +105,13 @@ export default function Register() {
                                 autoComplete="name"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="用户名"
+                                placeholder={t('auth.username')}
                                 value={formData.name}
                                 onChange={handleChange}
                             />
                         </div>
                         <div>
-                            <label htmlFor="email" className="sr-only">邮箱地址</label>
+                            <label htmlFor="email" className="sr-only">{t('auth.email')}</label>
                             <input
                                 id="email"
                                 name="email"
@@ -117,13 +119,13 @@ export default function Register() {
                                 autoComplete="email"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="邮箱地址"
+                                placeholder={t('auth.email')}
                                 value={formData.email}
                                 onChange={handleChange}
                             />
                         </div>
                         <div>
-                            <label htmlFor="password" className="sr-only">密码</label>
+                            <label htmlFor="password" className="sr-only">{t('auth.password')}</label>
                             <input
                                 id="password"
                                 name="password"
@@ -131,13 +133,13 @@ export default function Register() {
                                 autoComplete="new-password"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="密码（至少6位）"
+                                placeholder={t('auth.passwordWithHint')}
                                 value={formData.password}
                                 onChange={handleChange}
                             />
                         </div>
                         <div>
-                            <label htmlFor="confirmPassword" className="sr-only">确认密码</label>
+                            <label htmlFor="confirmPassword" className="sr-only">{t('auth.confirmPassword')}</label>
                             <input
                                 id="confirmPassword"
                                 name="confirmPassword"
@@ -145,7 +147,7 @@ export default function Register() {
                                 autoComplete="new-password"
                                 required
                                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                                placeholder="确认密码"
+                                placeholder={t('auth.confirmPassword')}
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
                             />
@@ -158,15 +160,19 @@ export default function Register() {
                             disabled={loading}
                             className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
                         >
-                            {loading ? '注册中...' : '注册账户'}
+                            {loading ? t('auth.registering') : t('auth.register')}
                         </button>
+                    </div>
+
+                    <div className="rounded-md bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                        {t('auth.registerHint')}
                     </div>
 
                     <div className="text-center">
             <span className="text-sm text-gray-600">
-              已有账户?{' '}
+              {t('auth.hasAccount')}{' '}
                 <Link href="/auth/login" className="font-medium text-blue-600 hover:text-blue-500">
-                立即登录
+                {t('auth.loginNow')}
               </Link>
             </span>
                     </div>

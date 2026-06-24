@@ -1,1 +1,24 @@
 @import 'tailwindcss';
+
+@keyframes page-route-enter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+        filter: saturate(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: saturate(1);
+    }
+}
+
+.page-route-transition {
+    animation: page-route-enter 220ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-route-transition {
+        animation: none;
+    }
+}

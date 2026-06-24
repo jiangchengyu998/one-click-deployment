@@ -2,9 +2,15 @@
 import { NextResponse } from 'next/server';
 import { getAdminSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { getJenkinsDeployNode } from '@/lib/deployConfig';
+import { createLogger, getJenkinsConfigState, getRequestContext } from '@/lib/logger';
+import { getRequiredWebhookSecret, getWebhookSecretConfigState } from '@/lib/webhookAuth';
+
+const logger = createLogger('admin.api.redeploy');
 
 // 重新部署API（管理员）
 export async function POST(request, { params }) {
+    const requestLogger = logger.child(getRequestContext(request));
     try {
         const session = await getAdminSession(request);
 
@@ -13,16 +19,30 @@ export async function POST(request, { params }) {
         }
 
         const { id } = await params;
+        const deployLogger = requestLogger.child({
+            apiId: id,
+            adminId: session.id,
+        });
 
         // 检查API是否存在
         const api = await prisma.api.findUnique({
-            where: { id: id },
-            include: { api_infor: true }
+            where: { id: id }
         });
 
         if (!api) {
+            deployLogger.warn('admin.api.redeploy.not_found');
             return NextResponse.json({ error: 'API不存在' }, { status: 404 });
         }
+
+        // 读取环境变量
+        const pipelineUrl = process.env.JENKINS_URL;
+        const jenkinsUser = process.env.JENKINS_USER;
+        const jenkinsToken = process.env.JENKINS_TOKEN;
+        if (!pipelineUrl || !jenkinsUser || !jenkinsToken) {
+            deployLogger.error('admin.api.redeploy.jenkins_config_missing', getJenkinsConfigState());
+            throw new Error('Jenkins配置不完整');
+        }
+        const webhookSecret = getRequiredWebhookSecret();
 
         // 在实际应用中，这里应该调用部署服务来重新部署API
         // 这里我们只是模拟重新部署过程，更新状态
@@ -34,22 +54,37 @@ export async function POST(request, { params }) {
                 updatedAt: new Date()
             }
         });
+        deployLogger.info('admin.api.redeploy.status_updated', {
+            status: 'BUILDING',
+        });
 
         // 30分钟后如果状态还在BUILDING，自动改为ERROR，防止卡死
         setTimeout(async () => {
-            // 重新获取api状态，防止覆盖掉已经变更的状态
-            const currentApi = await prisma.api.findUnique({
-                where: { id: api.id }
-            });
-
-            if (currentApi.status === 'BUILDING') {
-                console.log('API部署超时，自动设置为ERROR状态，API ID:', currentApi.id);
-                await prisma.api.update({
-                    where: { id: currentApi.id },
-                    data: { status: 'ERROR' }
+            try {
+                // 重新获取api状态，防止覆盖掉已经变更的状态
+                const currentApi = await prisma.api.findUnique({
+                    where: { id: api.id }
                 });
-            }
 
+                if (!currentApi) {
+                    deployLogger.warn('admin.api.redeploy.timeout_check.missing_api');
+                    return;
+                }
+
+                if (currentApi.status === 'BUILDING') {
+                    deployLogger.warn('admin.api.redeploy.timeout', {
+                        previousStatus: currentApi.status,
+                        nextStatus: 'ERROR',
+                        timeoutMinutes: 30,
+                    });
+                    await prisma.api.update({
+                        where: { id: currentApi.id },
+                        data: { status: 'ERROR' }
+                    });
+                }
+            } catch (error) {
+                deployLogger.error('admin.api.redeploy.timeout_check.failed', { error });
+            }
         }, 30*60*1000);
 
         // 检查用户配额
@@ -57,22 +92,18 @@ export async function POST(request, { params }) {
             where: { id: api.userId }
         });
 
-
-        // 读取环境变量
-        const pipelineUrl = process.env.JENKINS_URL;
-        const jenkinsUser = process.env.JENKINS_USER;
-        const jenkinsToken = process.env.JENKINS_TOKEN;
         const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
 
 
-        // api_information
-        const apiInfor = api.api_infor[0]
-        console.log('apiInfor:', apiInfor);
-        // 构建参数字符串
-        const query = new URLSearchParams({
+        const deployNode = getJenkinsDeployNode();
+        deployLogger.info('admin.api.redeploy.node_selected', {
+            ownerUserId: api.userId,
+            deployNode,
+        });
+        // 构建参数
+        const deployParams = new URLSearchParams({
             GIT_URL: api.gitUrl,
-            API_PORT: apiInfor.serverPort,
-            exe_node: apiInfor.execNode,
+            exe_node: deployNode,
             branch: api.branch || 'main',
             api_id: api.id,
             gitToken: api.gitToken || '',
@@ -80,28 +111,43 @@ export async function POST(request, { params }) {
             envs: JSON.stringify(api.envs),
             api_name: api.name + '-' +  user.code,
             CALL_BACK_HOST: process.env.NEXTAUTH_URL || '',
-        }).toString();
+            WEBHOOK_SECRET: webhookSecret,
+        });
 
         const response = await fetch(
-            `${pipelineUrl}/job/deploy_api_by_k3s/buildWithParameters?${query}`,
+            `${pipelineUrl}/job/deploy_api_by_k3s/buildWithParameters`,
             {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Basic ${basicAuth}`
-                }
+                    'Authorization': `Basic ${basicAuth}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: deployParams,
             }
         );
 
 
         if (response.status === 201) {
-            console.log('触发Jenkins任务成功');
+            deployLogger.info('admin.api.redeploy.jenkins_triggered', {
+                jobName: 'deploy_api_by_k3s',
+                jenkinsStatus: response.status,
+                jenkinsStatusText: response.statusText,
+            });
         } else {
-            console.error('触发Jenkins任务失败', response);
+            deployLogger.error('admin.api.redeploy.jenkins_trigger_failed', {
+                jobName: 'deploy_api_by_k3s',
+                jenkinsStatus: response.status,
+                jenkinsStatusText: response.statusText,
+            });
+            throw new Error('触发Jenkins任务失败');
         }
 
         return NextResponse.json({ message: 'API重新部署命令已发送' });
     } catch (error) {
-        console.error('重新部署API错误:', error);
+        requestLogger.error('admin.api.redeploy.failed', {
+            error,
+            ...getWebhookSecretConfigState(),
+        });
         return NextResponse.json(
             { error: '服务器错误' },
             { status: 500 }

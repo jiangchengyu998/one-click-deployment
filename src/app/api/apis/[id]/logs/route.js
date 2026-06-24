@@ -2,124 +2,32 @@
 import { NextResponse } from 'next/server';
 import { getUserSession } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { createLogger, getJenkinsConfigState, getRequestContext } from '@/lib/logger';
 
-// 获取API日志
-export async function GET(request, { params }) {
-    try {
-        const session = await getUserSession(request);
+const logger = createLogger('api.build_logs');
+const JOB_NAME = 'deploy_api_by_k3s';
+const SENSITIVE_KEYWORDS = ['oauth2', '环境变量', 'ydphoto', 'deploy.sh', 'export ', 'SECRET', 'KEY', 'TOKEN', 'PASSWORD', 'PWD', 'AWS_', 'GCP_', 'AZURE_'];
 
-        if (!session) {
-            return NextResponse.json({ error: '未授权' }, { status: 401 });
-        }
+function parseNonNegativeInteger(value, fallback = 0) {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isFinite(parsed) || parsed < 0) {
+        return fallback;
+    }
+    return parsed;
+}
 
-        const { id } = await params;
+function sanitizeLogLine(line) {
+    if (SENSITIVE_KEYWORDS.some(keyword => line.includes(keyword))) {
+        return '****';
+    }
+    return line;
+}
 
-        // 检查API是否存在
-        const api = await prisma.api.findUnique({
-            where: { id: id },
-            include: { api_infor: true }
-        });
-
-        if (!api) {
-            return NextResponse.json({ error: 'API不存在' }, { status: 404 });
-        }
-
-        // 检查权限
-        if (api.userId !== session.id) {
-            return NextResponse.json({ error: '无权访问此API' }, { status: 403 });
-        }
-
-        // 从pipeline中获取日志
-        const jenkinsUrl = process.env.JENKINS_URL;
-        const jenkinsUser = process.env.JENKINS_USER;
-        const jenkinsToken = process.env.JENKINS_TOKEN;
-
-        console.log('API信息:', {
-            apiId: api.id,
-            lastJobId: api.lastJobId,
-            pipelineUrl: jenkinsUrl,
-            jenkinsUser: jenkinsUser ? '已设置' : '未设置'
-        });
-
-        const buildNumber = api.lastJobId;
-        if (!buildNumber) {
-            return NextResponse.json({ error: 'API未部署过，没有构建记录' }, { status: 404 });
-        }
-
-        // 检查必要的环境变量
-        if (!jenkinsUrl || !jenkinsUser || !jenkinsToken) {
-            console.error('缺少必要的环境变量:', {
-                hasPipelineUrl: !!jenkinsUrl,
-                hasJenkinsUser: !!jenkinsUser,
-                hasJenkinsToken: !!jenkinsToken
-            });
-            return NextResponse.json({ error: '系统配置不完整' }, { status: 500 });
-        }
-
-        const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
-
-        // Jenkins API 通常使用 GET 请求获取日志
-        const jenkinsUrlForLog = `${jenkinsUrl}/job/deploy_api_by_k3s/${buildNumber}/consoleText`;
-        console.log('请求Jenkins URL:', jenkinsUrlForLog);
-
-        const response = await fetch(jenkinsUrlForLog, {
-            method: 'GET', // 改为 GET 请求
-            headers: {
-                'Authorization': `Basic ${basicAuth}`,
-                'Content-Type': 'text/plain; charset=utf-8'
-            }
-        });
-
-        console.log('Jenkins响应状态:', response.status, response.statusText);
-
-        if (!response.ok) {
-            let errorDetail = '';
-            try {
-                const errorText = await response.text();
-                errorDetail = errorText.substring(0, 200); // 只取前200字符避免日志过长
-            } catch (e) {
-                errorDetail = '无法读取错误详情';
-            }
-
-            console.error('获取Jenkins日志失败:', {
-                status: response.status,
-                statusText: response.statusText,
-                errorDetail: errorDetail
-            });
-
-            // 根据不同的状态码返回不同的错误信息
-            if (response.status === 404) {
-                return NextResponse.json({ error: '构建记录不存在或已被删除' }, { status: 404 });
-            } else if (response.status === 401) {
-                return NextResponse.json({ error: 'Jenkins认证失败' }, { status: 500 });
-            } else {
-                return NextResponse.json({
-                    error: `获取日志失败: ${response.status} ${response.statusText}`
-                }, { status: response.status });
-            }
-        }
-
-        const logs = await response.text();
-        console.log('获取到日志长度:', logs.length);
-
-        if (!logs || logs.trim() === '') {
-            return NextResponse.json([]);
-        }
-
-        // 解析日志 - 更灵活的解析方式
-        const logLines = logs.split('\n');
-
-        // 对包含 ‘环境变量’ 或者 ydphoto 的行进行特殊处理，将一整行使用****代替
-        const envVarKeywords = ['oauth2','环境变量', 'ydphoto', 'deploy.sh', 'export ', 'SECRET', 'KEY', 'TOKEN', 'PASSWORD', 'PWD', 'AWS_', 'GCP_', 'AZURE_'];
-        const sanitizedLogLines = logLines.map(line => {
-            if (envVarKeywords.some(keyword => line.includes(keyword))) {
-                return '****';
-            }
-            return line;
-        });
-
-
-        const parsedLogs = sanitizedLogLines.map((line, index) => {
+function parseLogLines(logs, buildNumber, idPrefix = '') {
+    return logs
+        .split('\n')
+        .map(sanitizeLogLine)
+        .map((line, index) => {
             // 尝试多种日志格式的解析
             let timestamp = new Date();
             let level = 'INFO';
@@ -155,17 +63,177 @@ export async function GET(request, { params }) {
             }
 
             return {
-                id: `${buildNumber}-${index}`,
+                id: `${buildNumber}-${idPrefix}${index}`,
                 timestamp: timestamp.toISOString(),
                 level: level,
                 message: message
             };
-        }).filter(log => log.message && log.message.trim() !== '');
+        })
+        .filter(log => log.message && log.message.trim() !== '');
+}
+
+function createJenkinsErrorResponse(response, errorDetail = '') {
+    // 根据不同的状态码返回不同的错误信息
+    if (response.status === 404) {
+        return NextResponse.json({ error: '构建记录不存在或已被删除' }, { status: 404 });
+    }
+
+    if (response.status === 401) {
+        return NextResponse.json({ error: 'Jenkins认证失败' }, { status: 500 });
+    }
+
+    return NextResponse.json({
+        error: `获取日志失败: ${response.status} ${response.statusText}`,
+    }, { status: response.status });
+}
+
+// 获取API日志
+export async function GET(request, { params }) {
+    const requestLogger = logger.child(getRequestContext(request));
+    try {
+        const session = await getUserSession(request);
+
+        if (!session) {
+            return NextResponse.json({ error: '未授权' }, { status: 401 });
+        }
+
+        const { id } = await params;
+        const logLogger = requestLogger.child({
+            apiId: id,
+            userId: session.id,
+        });
+
+        // 检查API是否存在
+        const api = await prisma.api.findFirst({
+            where: {
+                id: id,
+                userId: session.id,
+            }
+        });
+
+        if (!api) {
+            logLogger.warn('api.logs.not_found_or_forbidden');
+            return NextResponse.json({ error: 'API不存在' }, { status: 404 });
+        }
+
+        // 从pipeline中获取日志
+        const jenkinsUrl = process.env.JENKINS_URL;
+        const jenkinsUser = process.env.JENKINS_USER;
+        const jenkinsToken = process.env.JENKINS_TOKEN;
+
+        const buildNumber = api.lastJobId;
+        if (!buildNumber) {
+            logLogger.warn('api.logs.build_missing');
+            return NextResponse.json({ error: 'API未部署过，没有构建记录' }, { status: 404 });
+        }
+
+        // 检查必要的环境变量
+        if (!jenkinsUrl || !jenkinsUser || !jenkinsToken) {
+            logLogger.error('api.logs.jenkins_config_missing', getJenkinsConfigState());
+            return NextResponse.json({ error: '系统配置不完整' }, { status: 500 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const progressive = searchParams.get('mode') === 'progressive' || searchParams.has('start');
+        const start = parseNonNegativeInteger(searchParams.get('start'), 0);
+        const normalizedJenkinsUrl = jenkinsUrl.replace(/\/+$/g, '');
+        const basicAuth = Buffer.from(`${jenkinsUser}:${jenkinsToken}`).toString('base64');
+        const jenkinsUrlForLog = progressive
+            ? `${normalizedJenkinsUrl}/job/${JOB_NAME}/${buildNumber}/logText/progressiveText?start=${start}`
+            : `${normalizedJenkinsUrl}/job/${JOB_NAME}/${buildNumber}/consoleText`;
+        logLogger.info('api.logs.jenkins_request_started', {
+            jobName: JOB_NAME,
+            buildNumber,
+            progressive,
+            start,
+        });
+
+        const response = await fetch(jenkinsUrlForLog, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Basic ${basicAuth}`,
+                'Accept': 'text/plain; charset=utf-8'
+            }
+        });
+
+        logLogger.info('api.logs.jenkins_response_received', {
+            jobName: JOB_NAME,
+            buildNumber,
+            jenkinsStatus: response.status,
+            jenkinsStatusText: response.statusText,
+            progressive,
+        });
+
+        if (!response.ok) {
+            let errorDetail = '';
+            try {
+                const errorText = await response.text();
+                errorDetail = errorText.substring(0, 200); // 只取前200字符避免日志过长
+            } catch (e) {
+                errorDetail = '无法读取错误详情';
+            }
+
+            logLogger.error('api.logs.jenkins_fetch_failed', {
+                jobName: JOB_NAME,
+                buildNumber,
+                status: response.status,
+                statusText: response.statusText,
+                errorDetail: errorDetail,
+                progressive,
+            });
+
+            return createJenkinsErrorResponse(response, errorDetail);
+        }
+
+        const logs = await response.text();
+        const nextStart = progressive
+            ? parseNonNegativeInteger(response.headers.get('x-text-size'), start + logs.length)
+            : logs.length;
+        const hasMore = progressive && response.headers.get('x-more-data') === 'true';
+
+        logLogger.info('api.logs.jenkins_fetch_succeeded', {
+            jobName: JOB_NAME,
+            buildNumber,
+            logLength: logs.length,
+            progressive,
+            start,
+            nextStart,
+            hasMore,
+        });
+
+        if (!logs || logs.trim() === '') {
+            logLogger.info('api.logs.empty', {
+                buildNumber,
+            });
+            if (progressive) {
+                return NextResponse.json({
+                    logs: [],
+                    buildNumber,
+                    nextStart,
+                    hasMore,
+                    fetchedAt: new Date().toISOString(),
+                });
+            }
+
+            return NextResponse.json([]);
+        }
+
+        const parsedLogs = parseLogLines(logs, buildNumber, progressive ? `${start}-` : '');
+
+        if (progressive) {
+            return NextResponse.json({
+                logs: parsedLogs,
+                buildNumber,
+                nextStart,
+                hasMore,
+                fetchedAt: new Date().toISOString(),
+            });
+        }
 
         return NextResponse.json(parsedLogs);
 
     } catch (error) {
-        console.error('获取API日志错误:', error);
+        requestLogger.error('api.logs.failed', { error });
         return NextResponse.json(
             { error: `服务器错误: ${error.message}` },
             { status: 500 }
